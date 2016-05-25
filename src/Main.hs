@@ -11,32 +11,50 @@ where
 
 
 import Data.Char (toUpper)
-import Data.Daft.Vinyl.Derived (readFieldRecs, replacing1, replacing2, using1)
+import Data.Daft.Vinyl.Derived (replacing1, replacing2, using1)
+import Data.Daft.Vinyl.Derived.ReadWrite (readFieldRecs, displayFieldRecs)
 import Data.Vinyl.Derived (FieldRec, SField(..))
 
 
 main :: IO ()
-main =
-  do
+main = do
+
+    putStrLn ""
+
     let
       locations :: [FieldRec '[City, State, Latitude, Longitude]]
       Right locations = readFieldRecs locationData
+    putStrLn "#### Locations"
+    putStrLn $ displayFieldRecs locations
+
+    let
+      rotate :: (Double, Double) -> (Double, Double)
+      rotate (longitude, latitude) = 
+        let
+          angle = pi / 3
+          longitude' = longitude * cos angle - latitude * sin angle
+          latitude'  = longitude * sin angle + latitude * cos angle
+        in
+          (longitude', latitude')
       rotated = rotate `replacing2` (sLongitude, sLatitude) <$> locations
-    putStrLn "Locations:"
-    putStrLn $ unlines $ map show locations
-    putStrLn "Rotated locations:"
-    putStrLn $ unlines $ map show rotated
+    putStrLn "#### Rotated locations"
+    putStrLn $ displayFieldRecs rotated
+
     let
       populations :: [FieldRec '[Population, City]]
       Right populations = readFieldRecs populationData
+    putStrLn "#### Populations"
+    putStrLn $ displayFieldRecs populations
+
+    let
       uppered = map toUpper `replacing1` sCity <$> populations
+    putStrLn "#### Uppercase populations"
+    putStrLn $ displayFieldRecs uppered
+
+    let
       onlyPopulations = ((/ 1000) . fromIntegral) `using1` (sPopulation, sPopulation') <$> populations
-    putStrLn "Populations:"
-    putStrLn $ unlines $ map show populations
-    putStrLn "Uppercase populations:"
-    putStrLn $ unlines $ map show uppered
-    putStrLn "Just populations in thousands:"
-    putStrLn $ unlines $ map show onlyPopulations
+    putStrLn "#### Just populations in thousands"
+    putStrLn $ displayFieldRecs onlyPopulations
 
 
 -- Types of fields.
@@ -73,14 +91,3 @@ populationData = [
                  , ["\"Denver\""     ,  "2374203"  ]
                  , ["\"Golden\""     ,    "18867"  ]
                  ]
-  
-
--- Function for rotating.
-rotate :: (Double, Double) -> (Double, Double)
-rotate (longitude, latitude) = 
-  let
-    angle = pi / 3
-    longitude' = longitude * cos angle - latitude * sin angle
-    latitude'  = longitude * sin angle + latitude * cos angle
-  in
-    (longitude', latitude')
