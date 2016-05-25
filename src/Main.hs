@@ -10,10 +10,9 @@ module Main
 where
 
 
-import Control.Arrow ((&&&))
 import Data.Char (toUpper)
 import Data.Daft.Keyed (Keyed, aggregateByKey)
-import Data.Daft.Vinyl.Derived ((<:), aggregating1, keyed, replacing2, unkeyed, using1)
+import Data.Daft.Vinyl.Derived ((<:), keyed, replacing2, unkeyed, using1)
 import Data.Daft.Vinyl.Derived.ReadWrite (readFieldRecs, displayFieldRecs)
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
@@ -76,11 +75,15 @@ main = do
     let
       average :: [Double] -> Double
       average xs = sum xs / fromIntegral (length xs)
+      averageField s = (s =:) . average . map (s <:)
       averagedLocations :: [FieldRec '[State, Longitude, Latitude]]
       averagedLocations =
         unkeyed
           <$> aggregateByKey
-                (uncurry (<+>) . (average `aggregating1` (sLongitude, sLongitude) &&& (sLatitude =:) . average . map (sLatitude <:)))
+                ((<+>) <$> averageField sLongitude <*> averageField sLatitude)
+--              Why can't we write the line above as the following?
+--                (averageField sLongitude <~+~> averageField sLatitude)
+--                  where ff1 <~+~> ff2 = (<+>) <$> ff1 <*> ff2
                 keyedLocations
     putStrLn "#### Averaged locations"
     putStrLn $ displayFieldRecs averagedLocations

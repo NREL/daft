@@ -57,6 +57,7 @@ instance ReadFieldRec '[] where
   readFieldRec _  = Left "too many data items for record" 
 
 instance (KnownSymbol s, Read t, ReadFieldRec (rs :: [(Symbol, *)])) => ReadFieldRec ('(s, t) ': rs) where
+  -- Why cannot we write the following using 'foldr'?
   readFieldRec (x : xs) = liftM2 (:&) (Field <$> readEither x) (readFieldRec xs)
   readFieldRec []       = Left "too few data items for record"
 
