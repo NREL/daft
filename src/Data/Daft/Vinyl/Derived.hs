@@ -13,13 +13,19 @@ module Data.Daft.Vinyl.Derived (
 , using2
 , replacing1
 , replacing2
+, keyed
+, unkeyed
+, aggregating1
 ) where
 
 
+import Control.Applicative (liftA2)
 import Control.Arrow ((&&&), (***))
+import Data.Daft.Keyed (Keyed(..))
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec, (=:))
-import Data.Vinyl.Lens (type (∈), rget, rreplace)
+import Data.Vinyl.Lens (type (∈), type (⊆), rcast, rget, rreplace)
+import Data.Vinyl.TypeLevel (type (++))
 import GHC.TypeLits (KnownSymbol)
 
 import qualified Data.Vinyl.Derived as V (getField)
@@ -62,3 +68,18 @@ replacing1 fun f1 =
 replacing2 :: (KnownSymbol s1, KnownSymbol s2, '(s1, t1) ∈ fields, '(s2, t2) ∈ fields) => ((t1, t2) -> (t1, t2)) -> (sing '(s1, t1), sing '(s2, t2)) -> FieldRec fields -> FieldRec fields
 replacing2 fun f12 =
   uncurry rreplace . (using2 fun (f12, f12) &&& id)
+
+
+-- Separate a key and value from a record.
+keyed :: (ks ⊆ rs, vs ⊆ rs) => FieldRec rs -> Keyed (FieldRec ks) (FieldRec vs)
+keyed = liftA2 Keyed rcast rcast
+
+
+-- Merge a key and value into a record
+unkeyed :: Keyed (FieldRec ks) (FieldRec vs) -> FieldRec (ks ++ vs)
+unkeyed (Keyed k v) = k <+> v
+
+-- Aggregate several recods into a single record.
+aggregating1 :: (KnownSymbol s1, KnownSymbol s2, '(s1, t1) ∈ fields) => ([t1] -> t2) -> (sing '(s1, t1), sing '(s2, t2)) -> [FieldRec fields] -> FieldRec '[ '(s2, t2) ]
+aggregating1 fun (f1, f2) =
+  (f2 =:) . fun . map (f1 <:)

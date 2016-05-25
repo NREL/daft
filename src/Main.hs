@@ -10,10 +10,14 @@ module Main
 where
 
 
+import Control.Arrow ((&&&))
 import Data.Char (toUpper)
-import Data.Daft.Vinyl.Derived (replacing1, replacing2, using1)
+import Data.Daft.Keyed (Keyed, aggregateByKey)
+import Data.Daft.Vinyl.Derived ((<:), aggregating1, keyed, replacing2, unkeyed, using1)
 import Data.Daft.Vinyl.Derived.ReadWrite (readFieldRecs, displayFieldRecs)
-import Data.Vinyl.Derived (FieldRec, SField(..))
+import Data.Vinyl.Core ((<+>))
+import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
+import Data.Vinyl.Lens (rcast)
 
 
 main :: IO ()
@@ -26,6 +30,12 @@ main = do
       Right locations = readFieldRecs locationData
     putStrLn "#### Locations"
     putStrLn $ displayFieldRecs locations
+
+    let
+      onlyCityStates :: [FieldRec '[State, City]]
+      onlyCityStates = rcast <$> locations
+    putStrLn "#### Just states and cities"
+    putStrLn $ displayFieldRecs onlyCityStates
 
     let
       rotate :: (Double, Double) -> (Double, Double)
@@ -47,7 +57,7 @@ main = do
     putStrLn $ displayFieldRecs populations
 
     let
-      uppered = map toUpper `replacing1` sCity <$> populations
+      uppered = (sCity =:) . map toUpper . (sCity <:) <$> populations
     putStrLn "#### Uppercase populations"
     putStrLn $ displayFieldRecs uppered
 
@@ -55,6 +65,25 @@ main = do
       onlyPopulations = ((/ 1000) . fromIntegral) `using1` (sPopulation, sPopulation') <$> populations
     putStrLn "#### Just populations in thousands"
     putStrLn $ displayFieldRecs onlyPopulations
+
+    let
+      keyedLocations :: [Keyed (FieldRec '[State]) (FieldRec '[Longitude, Latitude])]
+      keyedLocations = keyed <$> locations
+    putStrLn "#### Keyed locations"
+    print keyedLocations
+    putStrLn ""
+
+    let
+      average :: [Double] -> Double
+      average xs = sum xs / fromIntegral (length xs)
+      averagedLocations :: [FieldRec '[State, Longitude, Latitude]]
+      averagedLocations =
+        unkeyed
+          <$> aggregateByKey
+                (uncurry (<+>) . (average `aggregating1` (sLongitude, sLongitude) &&& (sLatitude =:) . average . map (sLatitude <:)))
+                keyedLocations
+    putStrLn "#### Averaged locations"
+    putStrLn $ displayFieldRecs averagedLocations
 
 
 -- Types of fields.
