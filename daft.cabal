@@ -1,0 +1,28 @@
+name:                daft
+version:             0.2.0.0
+license:             AllRightsReserved
+category:            Data
+build-type:          Simple
+cabal-version:       >= 1.10
+
+library
+  build-depends:   base >= 4.8 && < 5
+               ,   data-default
+               ,   vinyl
+  exposed-modules: Data.Daft.String
+                   Data.Daft.Vinyl.Core
+                   Data.Daft.Vinyl.Derived
+  exposed: True
+  buildable: True
+  hs-source-dirs: src
+  ghc-options: -Wall
+  default-language:    Haskell2010
+
+executable daft
+  main-is:             Main.hs
+  build-depends:       base
+               ,       data-default
+               ,       vinyl
+  hs-source-dirs:      src
+  ghc-options: -Wall
+  default-language:    Haskell2010
