@@ -1,5 +1,5 @@
 name:                daft
-version:             0.2.2.1
+version:             0.2.2.2
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -8,6 +8,7 @@ cabal-version:       >= 1.10
 library
   build-depends:   base >= 4.8 && < 5
                ,   data-default
+               ,   lens
                ,   vinyl
   exposed-modules: Data.Daft.String
                    Data.Daft.Keyed
@@ -24,6 +25,7 @@ executable daft
   main-is:             Main.hs
   build-depends:       base
                ,       data-default
+               ,       lens
                ,       vinyl
   hs-source-dirs:      src
   ghc-options: -Wall

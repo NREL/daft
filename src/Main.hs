@@ -3,6 +3,7 @@
 {-# LANGUAGE DataKinds        #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes       #-}
+{-# LANGUAGE TypeFamilies     #-}
 {-# LANGUAGE TypeOperators    #-}
 
 
@@ -10,13 +11,15 @@ module Main
 where
 
 
+import Control.Lens.Getter ((^.))
+import Control.Lens.Setter ((%~))
 import Data.Char (toUpper)
 import Data.Daft.Keyed (Keyed, aggregateByKey)
 import Data.Daft.Vinyl.Derived ((<:), keyed, replacing2, unkeyed, using1)
 import Data.Daft.Vinyl.Derived.ReadWrite (readFieldRecs, displayFieldRecs)
 import Data.Vinyl.Core ((<+>))
-import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
-import Data.Vinyl.Lens (rcast)
+import Data.Vinyl.Derived (ElField, FieldRec, SField(..), (=:), rfield)
+import Data.Vinyl.Lens (type (∈), rcast, rlens)
 
 
 main :: IO ()
@@ -38,13 +41,13 @@ main = do
 
     let
       rotate :: (Double, Double) -> (Double, Double)
-      rotate (longitude, latitude) = 
+      rotate (longitude', latitude') = 
         let
           angle = pi / 3
-          longitude' = longitude * cos angle - latitude * sin angle
-          latitude'  = longitude * sin angle + latitude * cos angle
+          longitude'' = longitude' * cos angle - latitude' * sin angle
+          latitude''  = longitude' * sin angle + latitude' * cos angle
         in
-          (longitude', latitude')
+          (longitude'', latitude'')
       rotated = rotate `replacing2` (sLongitude, sLatitude) <$> locations
     putStrLn "#### Rotated locations"
     putStrLn $ displayFieldRecs rotated
@@ -56,14 +59,19 @@ main = do
     putStrLn $ displayFieldRecs populations
 
     let
-      uppered = (sCity =:) . map toUpper . (sCity <:) <$> populations
+      uppered = (city %~ map toUpper) <$> populations
     putStrLn "#### Uppercase populations"
     putStrLn $ displayFieldRecs uppered
 
     let
+      -- Without using lenses:
       onlyPopulations = ((/ 1000) . fromIntegral) `using1` (sPopulation, sPopulation') <$> populations
+      -- It is hard to use lenses just to transform one type of record to another?  Here is an unsatisfactory attempt:
+      onlyPopulations' = ((sPopulation' =:) . (/ 1000) . fromIntegral . (^. population)) <$> populations
     putStrLn "#### Just populations in thousands"
     putStrLn $ displayFieldRecs onlyPopulations
+    print $ onlyPopulations == onlyPopulations'
+    putStrLn ""
 
     let
       keyedLocations :: [Keyed (FieldRec '[State]) (FieldRec '[Longitude, Latitude])]
@@ -105,6 +113,27 @@ sLongitude   = SField :: SField Longitude
 sLatitude    = SField :: SField Latitude
 sPopulation  = SField :: SField Population
 sPopulation' = SField :: SField Population'
+
+
+-- Lenses.
+
+state :: (Functor f, t ~ ElField State, State ∈ rs) => (String -> f String) -> FieldRec rs -> f (FieldRec rs)
+state = rlens sState . rfield
+
+city :: (Functor f, t ~ ElField City, City ∈ rs) => (String -> f String) -> FieldRec rs -> f (FieldRec rs)
+city = rlens sCity . rfield
+
+longitude :: (Functor f, t ~ ElField Longitude, Longitude ∈ rs) => (Double -> f Double) -> FieldRec rs -> f (FieldRec rs)
+longitude = rlens sLongitude . rfield
+
+latitude :: (Functor f, t ~ ElField Latitude, Latitude ∈ rs) => (Double -> f Double) -> FieldRec rs -> f (FieldRec rs)
+latitude = rlens sLatitude . rfield
+
+population :: (Functor f, t ~ ElField Population, Population ∈ rs) => (Int -> f Int) -> FieldRec rs -> f (FieldRec rs)
+population = rlens sPopulation . rfield
+
+population' :: (Functor f, t ~ ElField Population', Population' ∈ rs) => (Double -> f Double) -> FieldRec rs -> f (FieldRec rs)
+population' = rlens sPopulation' . rfield
 
 
 -- Example tabular (CSV-like) data.
