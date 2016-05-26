@@ -11,13 +11,14 @@ module Main
 where
 
 
+import Control.Arrow ((&&&))
 import Control.Lens.Getter ((^.))
 import Control.Lens.Setter ((%~))
 import Data.Char (toUpper)
 import Data.Daft.Keyed (Keyed, aggregateByKey)
-import Data.Daft.Vinyl.Derived ((<:), keyed, replacing2, unkeyed, using1)
+import Data.Daft.Vinyl.Derived ((<:), fieldMap', keyed, replacing2, unkeyed, using1)
 import Data.Daft.Vinyl.Derived.ReadWrite (readFieldRecs, displayFieldRecs)
-import Data.Vinyl.Core ((<+>))
+import Data.Vinyl.Core (Rec(..), (<+>))
 import Data.Vinyl.Derived (ElField, FieldRec, SField(..), (=:), rfield)
 import Data.Vinyl.Lens (type (∈), rcast, rlens)
 
@@ -64,13 +65,38 @@ main = do
     putStrLn $ displayFieldRecs uppered
 
     let
+      toThousands :: Int -> Double
+      toThousands = (/ 1000) . fromIntegral
       -- Without using lenses:
-      onlyPopulations = ((/ 1000) . fromIntegral) `using1` (sPopulation, sPopulation') <$> populations
-      -- It is hard to use lenses just to transform one type of record to another?  Here is an unsatisfactory attempt:
-      onlyPopulations' = ((sPopulation' =:) . (/ 1000) . fromIntegral . (^. population)) <$> populations
+      onlyPopulations :: [FieldRec '[Population']]
+      onlyPopulations = toThousands `using1` (sPopulation, sPopulation') <$> populations
+      -- FIXME: It is hard to use lenses just to transform one type of record to another?  Here is an unsatisfactory attempt:
+      onlyPopulations' = ((sPopulation' =:) . toThousands . (^. population)) <$> populations
     putStrLn "#### Just populations in thousands"
     putStrLn $ displayFieldRecs onlyPopulations
     print $ onlyPopulations == onlyPopulations'
+    putStrLn ""
+
+    let
+      -- A pedestrian approach.  This should be straightforward for general users.
+      modifiedPopulations :: [FieldRec '[Population', City]]
+      modifiedPopulations =
+        [
+          let
+            p = toThousands $ r ^. population
+          in
+            sPopulation' =: p <+> rcast r
+        |
+          r <- populations
+        ]
+      -- Using lenses and arrows to apply a function on a field in one record and create a new type of record.
+      modifiedPopulations' =
+        uncurry (:&)
+          . ((toThousands `fieldMap'`) . (^. rlens sPopulation) &&& rcast)
+          <$> populations
+    putStrLn "#### City and population in thousands"
+    putStrLn $ displayFieldRecs modifiedPopulations
+    print $ modifiedPopulations == modifiedPopulations'
     putStrLn ""
 
     let
@@ -89,9 +115,8 @@ main = do
         unkeyed
           <$> aggregateByKey
                 ((<+>) <$> averageField sLongitude <*> averageField sLatitude)
---              Why can't we write the line above as the following?
---                (averageField sLongitude <~+~> averageField sLatitude)
---                  where ff1 <~+~> ff2 = (<+>) <$> ff1 <*> ff2
+--              FIXME: Why can't we write the line above as the following?
+--              (averageField sLongitude <~+~> averageField sLatitude) where ff1 <~+~> ff2 = (<+>) <$> ff1 <*> ff2
                 keyedLocations
     putStrLn "#### Averaged locations"
     putStrLn $ displayFieldRecs averagedLocations

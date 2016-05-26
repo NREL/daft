@@ -4,11 +4,13 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE PolyKinds           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
 
 
 module Data.Daft.Vinyl.Derived (
-  (<:)
+  fieldMap'
+, (<:)
 , using1
 , using2
 , replacing1
@@ -23,12 +25,17 @@ import Control.Applicative (liftA2)
 import Control.Arrow ((&&&), (***))
 import Data.Daft.Keyed (Keyed(..))
 import Data.Vinyl.Core ((<+>))
-import Data.Vinyl.Derived (FieldRec, (=:))
+import Data.Vinyl.Derived (ElField(..), FieldRec, (=:))
 import Data.Vinyl.Lens (type (∈), type (⊆), rcast, rget, rreplace)
 import Data.Vinyl.TypeLevel (type (++))
 import GHC.TypeLits (KnownSymbol)
 
 import qualified Data.Vinyl.Derived as V (getField)
+
+
+-- Map a field to a new symbol and type.
+fieldMap' :: KnownSymbol t => (a -> b) -> ElField '(s, a) -> ElField '(t, b)
+fieldMap' f (Field x) = Field (f x)
 
 
 -- Extract a field's data from a record.
