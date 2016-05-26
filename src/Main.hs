@@ -78,14 +78,15 @@ main = do
     putStrLn ""
 
     let
-      -- A pedestrian approach.  This should be straightforward for general users.
+      -- A pedestrian approach, one which doesn't benefit from lenses.  This should be straightforward for general users.
       modifiedPopulations :: [FieldRec '[Population', City]]
       modifiedPopulations =
         [
           let
-            p = toThousands $ r ^. population
+            p = sPopulation <: r
+            p' = toThousands p
           in
-            sPopulation' =: p <+> rcast r
+            sPopulation' =: p' <+> rcast r
         |
           r <- populations
         ]
