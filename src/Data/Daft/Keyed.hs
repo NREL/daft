@@ -1,3 +1,6 @@
+{-# LANGUAGE Safe #-}
+
+
 module Data.Daft.Keyed (
   Keyed(..)
 , groupByKey
