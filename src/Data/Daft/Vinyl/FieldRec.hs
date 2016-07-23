@@ -20,15 +20,18 @@ module Data.Daft.Vinyl.FieldRec (
 , readFieldRecs
 , showFieldRec
 , showFieldRecs
+, readFieldRecFile
 ) where
 
 
 import Control.Applicative (liftA2)
 import Control.Monad (liftM2)
-import Control.Monad.Except (MonadError, throwError)
+import Control.Monad.Except (MonadError, MonadIO, throwError)
+import Control.Monad.Except.Util (tryIO)
 import Data.Daft.Keyed (Keyed(..))
 import Data.Default (Default(..))
 import Data.List (nub)
+import Data.List.Split (splitOn)
 import Data.List.Util (elemPermutation)
 import Data.Maybe (fromJust, isNothing)
 import Data.Proxy (Proxy(Proxy))
@@ -153,3 +156,9 @@ showFieldRecs dataRows =
     where
       u = def'
       signature = labels u
+
+
+readFieldRecFile :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => FilePath -> m [FieldRec fields]
+readFieldRecFile =
+  ((readFieldRecs . fmap (splitOn "\t") . lines) =<<)
+    . tryIO . readFile

@@ -1,8 +1,10 @@
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE Safe            #-}
 
 
 module Data.Daft.Keyed (
   Keyed(..)
+, asPair
 , groupByKey
 , aggregate
 , aggregateByKey
@@ -20,6 +22,10 @@ data Keyed k v =
   , value :: v
   }
     deriving (Eq, Ord, Read, Show)
+
+
+asPair :: Keyed k v -> (k, v)
+asPair Keyed{..} = (key, value)
 
 
 groupByKey :: (Eq k, Ord k) => [Keyed k v] -> [Keyed k [v]]
