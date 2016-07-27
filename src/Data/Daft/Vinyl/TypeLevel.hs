@@ -59,12 +59,13 @@ testElem1 :: f A -> Rec f '[A] -> ()
 testElem1 = relem
 
 -- The following correctly do not type check.
+{-
+testElem2 :: f B -> Rec f '[] -> ()
+testElem2 = relem
 
---testElem2 :: f B -> Rec f '[] -> ()
---testElem2 = relem
-
---testElem3 :: f B -> Rec f '[A] -> ()
---testElem3 = relem
+testElem3 :: f B -> Rec f '[A] -> ()
+testElem3 = relem
+-}
 
 
 class RNonElem a bs where
@@ -82,9 +83,10 @@ testNonElem2 :: f A -> Rec f '[B] -> ()
 testNonElem2 = rnonElem
 
 -- The following correctly do not type check.
-
---testNonElem3 :: f A -> Rec f '[A] -> ()
---testNonElem3 = rnonElem
+{-
+testNonElem3 :: f A -> Rec f '[A] -> ()
+testNonElem3 = rnonElem
+-}
 
 
 type family Unique as :: Bool where
@@ -109,9 +111,10 @@ testUnique3 :: Rec f '[A,B] -> ()
 testUnique3 = runique
 
 -- The following correctly do not type check.
-
---testUnique4 :: Rec f '[A,A] -> ()
---testUnique4 = runique
+{-
+testUnique4 :: Rec f '[A,A] -> ()
+testUnique4 = runique
+-}
 
 
 class RDistinct as bs where
@@ -135,15 +138,16 @@ testDistinct4 :: Rec f '[A, B] -> Rec f '[C] -> ()
 testDistinct4 = rdistinct
 
 -- The following correctly do not type check.
+{-
+testDistinct6 :: Rec f '[A] -> Rec f '[A] -> ()
+testDistinct6 = rdistinct
 
---testDistinct6 :: Rec f '[A] -> Rec f '[A] -> ()
---testDistinct6 = rdistinct
+testDistinct7 :: Rec f '[A, B] -> Rec f '[B, C, A] -> ()
+testDistinct7 = rdistinct
 
---testDistinct7 :: Rec f '[A, B] -> Rec f '[B, C, A] -> ()
---testDistinct7 = rdistinct
-
---testDistinct8 :: Rec f '[A, B] -> Rec f '[C, A] -> ()
---testDistinct8 = rdistinct
+testDistinct8 :: Rec f '[A, B] -> Rec f '[C, A] -> ()
+testDistinct8 = rdistinct
+-}
 
 
 type family Equiv as bs where
@@ -186,15 +190,16 @@ testNub7 :: Rec f '[A, B, A] -> Rec f '[A, B]
 testNub7 = rnub
 
 -- The following correctly do not type check.
+{-
+testNub8 :: Rec f '[] -> Rec f '[A]
+testNub8 = rnub
 
---testNub8 :: Rec f '[] -> Rec f '[A]
---testNub8 = rnub
+testNub9 :: Rec f '[B] -> Rec f '[A]
+testNub9 = rnub
 
---testNub9 :: Rec f '[B] -> Rec f '[A]
---testNub9 = rnub
-
---testNub10 :: Rec f '[B, A, B] -> Rec f '[B]
---testNub10 = rnub
+testNub10 :: Rec f '[B, A, B] -> Rec f '[B]
+testNub10 = rnub
+-}
 
 
 class RUnion as bs cs where
@@ -230,18 +235,19 @@ testUnion8 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[B, A, C]
 testUnion8 = runion
 
 -- The following correctly do not type check.
+{-
+testUnion9 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
+testUnion9 = runion
 
---testUnion9 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
---testUnion9 = runion
+testUnion10 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
+testUnion10 = runion
 
---testUnion10 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
---testUnion10 = runion
+testUnion11 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
+testUnion11 = runion
 
---testUnion11 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
---testUnion11 = runion
-
---testUnion12 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
---testUnion12 = runion
+testUnion12 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
+testUnion12 = runion
+-}
 
 
 type family Intersection xs ys where
@@ -284,18 +290,19 @@ testIntersection8 :: Rec f '[A, B] -> Rec f '[C, B, A] -> Rec f '[B, A]
 testIntersection8 = rintersection
 
 -- The following correctly do not type check.
+{-
+testIntersection9 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
+testIntersection9 = rintersection
 
---testIntersection9 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
---testIntersection9 = rintersection
+testIntersection10 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
+testIntersection10 = rintersection
 
---testIntersection10 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
---testIntersection10 = rintersection
+testIntersection11 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
+testIntersection11 = rintersection
 
---testIntersection11 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
---testIntersection11 = rintersection
-
---testIntersection12 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
---testIntersection12 = rintersection
+testIntersection12 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
+testIntersection12 = rintersection
+-}
 
 
 class RDifference as bs cs where
@@ -322,12 +329,13 @@ testDifference5 :: Rec f '[A] -> Rec f '[B, A] -> Rec f '[B]
 testDifference5 = rdifference
 
 -- The following correctly do not type check.
+{-
+testDifference6 :: Rec f '[B] -> Rec f '[] -> Rec f '[B]
+testDifference6 = rdifference
 
---testDifference6 :: Rec f '[B] -> Rec f '[] -> Rec f '[B]
---testDifference6 = rdifference
-
---testDifference7 :: Rec f '[B] -> Rec f '[C] -> Rec f '[B]
---testDifference7 = rdifference
+testDifference7 :: Rec f '[B] -> Rec f '[C] -> Rec f '[B]
+testDifference7 = rdifference
+-}
 
 
 type A = '("A", Double)

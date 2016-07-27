@@ -32,12 +32,13 @@ naturalJoin _ x y =
       $ runion x y
 
 -- FIXME: The following should type check, but they do not!
+{-
+testNaturalJoin1 :: Eq (Rec f '[]) => Proxy '[] -> Rec f '[] -> Rec f '[] -> Maybe (Rec f '[])
+testNaturalJoin1 = naturalJoin
 
---testNaturalJoin1 :: Eq (Rec f '[]) => Proxy '[] -> Rec f '[] -> Rec f '[] -> Maybe (Rec f '[])
---testNaturalJoin1 = naturalJoin
-
---testNaturalJoin2 :: Eq (Rec f '[]) => Proxy '[] -> Rec f '[A] -> Rec f '[B] -> Maybe (Rec f '[A, B])
---testNaturalJoin2 = naturalJoin
+testNaturalJoin2 :: Eq (Rec f '[]) => Proxy '[] -> Rec f '[A] -> Rec f '[B] -> Maybe (Rec f '[A, B])
+testNaturalJoin2 = naturalJoin
+-}
 
 -- The following correctly type check.
 
@@ -51,16 +52,16 @@ testNaturalJoin6 :: Eq (Rec f '[A, B]) => Proxy '[A, B] -> Rec f '[A, B] -> Rec 
 testNaturalJoin6 = naturalJoin
 
 -- The following correctly do not type check.
+{-
+testNaturalJoin7 :: Eq (Rec f '[A]) => Proxy '[A] -> Rec f '[A, B] -> Rec f '[A, B] -> Maybe (Rec f '[A, B])
+testNaturalJoin7 = naturalJoin
 
---testNaturalJoin6 :: Eq (Rec f '[A]) => Proxy '[A] -> Rec f '[A, B] -> Rec f '[A, B] -> Maybe (Rec f '[A, B])
---testNaturalJoin6 = naturalJoin
+testNaturalJoin8 :: Eq (Rec f '[A]) => Proxy '[A] -> Rec f '[A] -> Rec f '[A] -> Maybe (Rec f '[A, A])
+testNaturalJoin8 = naturalJoin
 
---testNaturalJoin8 :: Eq (Rec f '[A]) => Proxy '[A] -> Rec f '[A] -> Rec f '[A] -> Maybe (Rec f '[A, A])
---testNaturalJoin8 = naturalJoin
-
---testNaturalJoin9 :: Eq (Rec f '[A, B]) => Proxy '[A, B] -> Rec f '[A, B] -> Rec f '[C, A] -> Maybe (Rec f '[A, B, C])
---testNaturalJoin9 = naturalJoin
-
+testNaturalJoin9 :: Eq (Rec f '[A, B]) => Proxy '[A, B] -> Rec f '[A, B] -> Rec f '[C, A] -> Maybe (Rec f '[A, B, C])
+testNaturalJoin9 = naturalJoin
+-}
 
 crossJoin :: (RUnion as bs cs, RDistinct as bs)
           => Rec f as -> Rec f bs -> Rec f cs
@@ -78,12 +79,13 @@ testCrossJoin3 :: Rec f '[A] -> Rec f '[B] -> Rec f '[A, B]
 testCrossJoin3 = crossJoin
 
 -- The following correctly do not type check.
+{-
+testCrossJoin4 :: Rec f '[A] -> Rec f '[A] -> Rec f '[A]
+testCrossJoin4 = crossJoin
 
---testCrossJoin4 :: Rec f '[A] -> Rec f '[A] -> Rec f '[A]
---testCrossJoin4 = crossJoin
-
---testCrossJoin5 :: Rec f '[B, A] -> Rec f '[A, C] -> Rec f '[A, B, C]
---testCrossJoin5 = crossJoin
+testCrossJoin5 :: Rec f '[B, A] -> Rec f '[A, C] -> Rec f '[A, B, C]
+testCrossJoin5 = crossJoin
+-}
 
 
 type A = '("A", Double)
