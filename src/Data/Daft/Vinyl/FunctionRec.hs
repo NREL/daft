@@ -14,8 +14,8 @@ module Data.Daft.Vinyl.FunctionRec (
 ) where
 
 
-import Control.Arrow ((&&&))
-import Data.Daft.Lookup
+import Control.Monad (liftM2)
+import Data.Daft.Lookup (LookupTable, asLookupTable, assocs)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RIntersection, RUnion(runion))
 import Data.Maybe (catMaybes, mapMaybe)
 import Data.Vinyl.Core (Rec)
@@ -42,14 +42,7 @@ evaluate SupportedFunction{..} = function
 
 
 tabulate :: Ord k => [k] -> FunctionRec k v -> LookupTable k v
-tabulate ks f =
-  asLookupTable
-    $ catMaybes
-    [
-      (k, ) <$> (f `evaluate` k)
-    |
-      k <- ks
-    ]
+tabulate ks f = asLookupTable $ mapMaybe (liftM2 fmap (,) (evaluate f)) ks
 
 
 -- FIXME: Try to unify natural and cross joins into a single function.
