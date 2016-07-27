@@ -5,6 +5,7 @@
 
 module Data.Daft.Lookup (
   LookupTable
+, keysSet
 , keys
 , elems
 , assocs
@@ -16,7 +17,7 @@ module Data.Daft.Lookup (
 
 
 import Data.Daft.Keyed (Keyed(..), asPair)
-import Data.Map.Strict (Map, (!), assocs, elems, fromList, keys, lookupLE, lookupGE)
+import Data.Map.Strict (Map, (!), assocs, elems, fromList, keysSet, keys, lookupLE, lookupGE)
 
 
 type LookupTable k v = Map k v
