@@ -14,7 +14,7 @@ module Data.Daft.Vinyl.Join (
 
 
 import Control.Monad (guard)
-import Data.Daft.Vinyl.TypeLevel (RIntersection(..), RUnion(..))
+import Data.Daft.Vinyl.TypeLevel (RDistinct, RIntersection(..), RUnion(..))
 import Data.Proxy (Proxy)
 import Data.Vinyl.Core (Rec)
 import Data.Vinyl.Lens (type (⊆), rcast)
@@ -83,7 +83,7 @@ testNaturalJoin9 :: Eq (Rec f '[A, B]) => Proxy '[A, B] -> Rec f '[A, B] -> Rec 
 testNaturalJoin9 = naturalJoin
 -}
 
-crossJoin :: (RUnion as bs cs, RIntersection as bs '[])
+crossJoin :: (RUnion as bs cs, RDistinct as bs)
           => Rec f as -> Rec f bs -> Rec f cs
 crossJoin = runion
 
