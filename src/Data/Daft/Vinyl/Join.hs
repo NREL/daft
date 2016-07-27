@@ -14,10 +14,30 @@ module Data.Daft.Vinyl.Join (
 
 
 import Control.Monad (guard)
-import Data.Daft.Vinyl.TypeLevel (RDistinct, RIntersection(..), RUnion(..))
+import Data.Daft.Vinyl.TypeLevel (RIntersection(..), RUnion(..))
 import Data.Proxy (Proxy)
 import Data.Vinyl.Core (Rec)
 import Data.Vinyl.Lens (type (⊆), rcast)
+
+
+{- TODO: Work in progress on unifying natural and cross joins.
+
+class Joiner ks where
+  join :: (Eq (Rec f ks), ks ⊆ as, ks ⊆ bs, RUnion as bs cs, RIntersection as bs ks)
+       => Proxy ks -> Rec f as -> Rec f bs -> Maybe (Rec f cs)
+
+instance Joiner '[] where
+  join _ x y = Just $ crossJoin x y 
+
+instance Joiner (k ': ks) where
+  join = naturalJoin
+
+testJoin1 :: Eq (Rec f '[]) => Proxy '[] -> Rec f '[] -> Rec f '[] -> Maybe (Rec f '[])
+testJoin1 = join
+
+testJoin2 :: Eq (Rec f '[]) => Proxy '[] -> Rec f '[A] -> Rec f '[B] -> Maybe (Rec f '[A, B])
+testJoin2 = join
+-}
 
 
 naturalJoin :: forall ks as bs cs f proxy
@@ -63,7 +83,7 @@ testNaturalJoin9 :: Eq (Rec f '[A, B]) => Proxy '[A, B] -> Rec f '[A, B] -> Rec 
 testNaturalJoin9 = naturalJoin
 -}
 
-crossJoin :: (RUnion as bs cs, RDistinct as bs)
+crossJoin :: (RUnion as bs cs, RIntersection as bs '[])
           => Rec f as -> Rec f bs -> Rec f cs
 crossJoin = runion
 
