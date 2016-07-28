@@ -4,6 +4,7 @@
 
 module Data.Daft.Keyed (
   Keyed(..)
+, makeKeyed
 , asPair
 , groupByKey
 , aggregate
@@ -11,6 +12,7 @@ module Data.Daft.Keyed (
 ) where
 
 
+import Control.Arrow ((&&&))
 import Data.Function (on)
 import Data.List (groupBy, sortOn)
 
@@ -22,6 +24,10 @@ data Keyed k v =
   , value :: v
   }
     deriving (Eq, Ord, Read, Show)
+
+
+makeKeyed :: (a -> k) -> (a -> v) -> a -> Keyed k v
+makeKeyed fk fv = uncurry Keyed . (fk &&& fv)
 
 
 asPair :: Keyed k v -> (k, v)
