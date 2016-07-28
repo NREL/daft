@@ -4,7 +4,6 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 
-
 module Data.Daft.Vinyl.FunctionRec.Example (
   main
 ) where
