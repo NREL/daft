@@ -69,6 +69,10 @@ instance Ord k => Monoid (FunctionRec k v) where
   mappend (TabulatedFunction t1) (TabulatedFunction t2) = TabulatedFunction $ M.union t1 t2
   mappend tf1 tf2 = SupportedFunction $ \k -> evaluate tf1 k <|> evaluate tf2 k
 
+-- TODO: Is it possible to make 'FunctionRec' an instance of 'Foldable'?
+
+-- TODO: Is it possible to make 'FunctionRec' an instance of 'Traversable'?
+
 
 makeTabulatedFunction :: (Ord (FieldRec ks), ks ⊆ rs, vs ⊆ rs) => [FieldRec rs] -> FunctionRec (FieldRec ks) (FieldRec vs)
 makeTabulatedFunction = TabulatedFunction . asLookupTable . fmap (makeKeyed rcast rcast)
@@ -99,7 +103,7 @@ naturalJoin :: forall kj k1 k2 k3 v1 v2 v3 proxy
             => proxy kj -> FunctionRec (FieldRec k1) (FieldRec v1) -> FunctionRec (FieldRec k2) (FieldRec v2) -> FunctionRec (FieldRec k3) (FieldRec v3)
 -- FIXME: We could simplify the constaints if the type system could make inteferences about the relationships between unions, intersections, and subsets.
 naturalJoin p (TabulatedFunction t1) (TabulatedFunction t2) =
-  -- FIXME: This is an O(n^2) algorithm!
+  -- FIXME: This is an O(n^2) algorithm!  Would it be worthwhile to use 'Data.MultiMap' to organize intermediate computations?
   TabulatedFunction
     . asLookupTable
     $ catMaybes
