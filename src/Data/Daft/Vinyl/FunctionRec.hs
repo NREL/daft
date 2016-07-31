@@ -101,23 +101,11 @@ naturalJoin p (TabulatedFunction t1) (TabulatedFunction t2) =
       (k1, v1) <- assocs t1
     , (k2, v2) <- assocs t2
     ]
-naturalJoin _ (TabulatedFunction t1) (SupportedFunction f2) =
-  SupportedFunction $ \k3 ->
-    do 
-      v1 <- rcast k3 `M.lookup` t1 
-      v2 <- f2 $ rcast k3
-      return $ v1 `runion` v2
-naturalJoin _ (SupportedFunction f1) (TabulatedFunction t2) =
+naturalJoin _ fr1 fr2 =
   SupportedFunction $ \k3 ->
     do
-      v1 <- f1 $ rcast k3
-      v2 <- rcast k3 `M.lookup` t2
-      return $ v1 `runion` v2
-naturalJoin _ (SupportedFunction f1) (SupportedFunction f2) =
-  SupportedFunction $ \k3 ->
-    do
-      v1 <- f1 $ rcast k3
-      v2 <- f2 $ rcast k3
+      v1 <- fr1 `evaluate` rcast k3
+      v2 <- fr2 `evaluate` rcast k3
       return $ v1 `runion` v2
 
 
@@ -134,21 +122,9 @@ crossJoin (TabulatedFunction t1) (TabulatedFunction t2) =
       (k1, v1) <- assocs t1
     , (k2, v2) <- assocs t2
     ]
-crossJoin (TabulatedFunction t1) (SupportedFunction f2) =
+crossJoin fr1 fr2 =
   SupportedFunction $ \k3 ->
     do
-      v1 <- rcast k3 `M.lookup` t1
-      v2 <- f2 $ rcast k3
-      return $ v1 `runion` v2
-crossJoin (SupportedFunction f1) (TabulatedFunction t2) =
-  SupportedFunction $ \k3 ->
-    do
-      v1 <- f1 $ rcast k3
-      v2 <- rcast k3 `M.lookup` t2
-      return $ v1 `runion` v2
-crossJoin (SupportedFunction f1) (SupportedFunction f2) =
-  SupportedFunction $ \k3 ->
-    do
-      v1 <- f1 $ rcast k3
-      v2 <- f2 $ rcast k3
+      v1 <- fr1 `evaluate` rcast k3
+      v2 <- fr2 `evaluate` rcast k3
       return $ v1 `runion` v2
