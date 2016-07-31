@@ -56,6 +56,14 @@ instance Ord k => Applicative (FunctionRec k) where
        v <- fr2 `evaluate` k
        return $ f v
 
+instance Ord k => Monad (FunctionRec k) where
+--(>>=) :: FunctionRec k a -> (a -> FunctionRec k b) -> FunctionRec k b
+  fr1 >>= f =
+    SupportedFunction $ \k ->
+      do
+        v <- fr1 `evaluate` k
+        f v `evaluate` k
+
 instance Ord k => Monoid (FunctionRec k v) where
   mempty = TabulatedFunction mempty
   mappend (TabulatedFunction t1) (TabulatedFunction t2) = TabulatedFunction $ M.union t1 t2
