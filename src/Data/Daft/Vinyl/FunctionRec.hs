@@ -27,7 +27,7 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 
 import qualified Data.Daft.Vinyl.Join as J (crossJoin, naturalJoin)
-import qualified Data.Map as M (lookup, union)
+import qualified Data.Map as M (empty, lookup, mergeWithKey, union)
 
 
 data FunctionRec k v =
@@ -43,6 +43,18 @@ data FunctionRec k v =
 instance Functor (FunctionRec k) where
   fmap f (TabulatedFunction t1) = TabulatedFunction $ fmap f t1
   fmap f (SupportedFunction f1) = SupportedFunction $ fmap f . f1
+
+instance Ord k => Applicative (FunctionRec k) where
+  pure = SupportedFunction . const . return
+  TabulatedFunction t1 <*> TabulatedFunction t2 =
+    TabulatedFunction
+      $ M.mergeWithKey (const (Just .)) (const M.empty) (const M.empty) t1 t2
+  fr1 <*> fr2 =
+    SupportedFunction $ \k ->
+      do
+       f <- fr1 `evaluate` k
+       v <- fr2 `evaluate` k
+       return $ f v
 
 instance Ord k => Monoid (FunctionRec k v) where
   mempty = TabulatedFunction mempty
