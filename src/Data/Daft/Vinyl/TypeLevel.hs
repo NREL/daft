@@ -33,8 +33,8 @@ module Data.Daft.Vinyl.TypeLevel (
 import Data.Type.Bool (If, Not, type (&&))
 import Data.Type.List (Difference, Find, Remove, Union)
 import Data.Vinyl.Core (Rec, (<+>))
-import Data.Vinyl.Lens (RSubset, rcast)
-import Data.Vinyl.TypeLevel (RImage, type (++))
+import Data.Vinyl.Lens (type (⊆), rcast)
+import Data.Vinyl.TypeLevel (type (++))
 
 
 type family Equal (a :: k) (b :: k) :: Bool where
@@ -163,7 +163,7 @@ type family Nub as where
 class RNub as bs where
   rnub :: Rec f as -> Rec f bs
 
-instance (Equiv (Nub as) bs ~ 'True, RSubset bs as (RImage bs as)) => RNub as bs where
+instance (Equiv (Nub as) bs ~ 'True, bs ⊆ as) => RNub as bs where
   rnub = rcast
 
 -- The following correctly type check.
@@ -205,7 +205,7 @@ testNub10 = rnub
 class RUnion as bs cs where
   runion :: Rec f as -> Rec f bs -> Rec f cs
 
-instance (Equiv (Union as bs) cs ~ 'True, RSubset cs (as ++ bs) (RImage cs (as ++ bs))) => RUnion as bs cs where
+instance (Equiv (Union as bs) cs ~ 'True, cs ⊆ (as ++ bs)) => RUnion as bs cs where
   runion xs ys = rcast $ xs <+> ys
 
 -- The following correctly type check.
@@ -260,7 +260,7 @@ type family Intersection xs ys where
 class RIntersection as bs cs where
  rintersection :: Rec f as -> Rec f bs -> Rec f cs
 
-instance (Equiv (Intersection as bs) cs ~ 'True, RSubset cs as (RImage cs as)) => RIntersection as bs cs where
+instance (Equiv (Intersection as bs) cs ~ 'True, cs ⊆ as) => RIntersection as bs cs where
   rintersection xs _ = rcast xs
 
 -- The following correctly type check.
@@ -308,7 +308,7 @@ testIntersection12 = rintersection
 class RDifference as bs cs where
  rdifference :: Rec f as -> Rec f bs -> Rec f cs
 
-instance (Equiv(Difference as bs) cs ~ 'True, RSubset cs bs (RImage cs bs)) => RDifference as bs cs where
+instance (Equiv(Difference as bs) cs ~ 'True, cs ⊆ bs) => RDifference as bs cs where
   rdifference _ = rcast
 
 -- The following correctly type check.
