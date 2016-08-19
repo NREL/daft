@@ -21,6 +21,7 @@ module Data.Daft.Vinyl.FieldRec (
 , showFieldRec
 , showFieldRecs
 , readFieldRecFile
+, writeFieldRecFile
 ) where
 
 
@@ -30,7 +31,7 @@ import Control.Monad.Except (MonadError, MonadIO, throwError)
 import Control.Monad.Except.Util (tryIO)
 import Data.Daft.Keyed (Keyed(..))
 import Data.Default (Default(..))
-import Data.List (nub)
+import Data.List (intercalate, nub)
 import Data.List.Split (splitOn)
 import Data.List.Util (elemPermutation)
 import Data.Maybe (fromJust, isNothing)
@@ -160,3 +161,10 @@ readFieldRecFile :: (IsString e, MonadError e m, MonadIO m, InternalDefault (Fie
 readFieldRecFile =
   ((readFieldRecs . fmap (splitOn "\t") . lines) =<<)
     . tryIO . readFile
+
+
+writeFieldRecFile :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => FilePath -> [FieldRec fields] -> m ()
+writeFieldRecFile =
+  (tryIO .)
+    . (. (unlines . map (intercalate "\t") . showFieldRecs))
+    . writeFile
