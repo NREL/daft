@@ -175,6 +175,7 @@ readFieldRecSource :: (IsString e, MonadError e m, MonadIO m, InternalDefault (F
 readFieldRecSource FileData{..}    = readFieldRecFile filePath
 readFieldRecSource TextData{..}    = readFieldRecs . fmap (splitOn "\t") $ lines parsableText
 readFieldRecSource BuiltinData{..} = throwError "Cannot read records from built-in data source."
+readFieldRecSource NoData          = return []
 
 
 writeFieldRecFile :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => FilePath -> [FieldRec fields] -> m ()
@@ -197,6 +198,9 @@ writeFieldRecSource TextData{..} =
 writeFieldRecSource BuiltinData{..} =
   const
     $ throwError "Cannot write records to built-in data source."
+writeFieldRecSource NoData =
+  const
+    $ return Nothing
 
 
 naturalJoin :: forall ks as bs cs proxy
