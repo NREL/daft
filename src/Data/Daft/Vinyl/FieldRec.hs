@@ -25,6 +25,8 @@ module Data.Daft.Vinyl.FieldRec (
 , readFieldRecSource
 , writeFieldRecFile
 , writeFieldRecSource
+, naturalJoin
+, crossJoin
 ) where
 
 
@@ -34,11 +36,12 @@ import Control.Monad.Except (MonadError, MonadIO, throwError)
 import Control.Monad.Except.Util (tryIO)
 import Data.Daft.Keyed (Keyed(..))
 import Data.Daft.Source (DataSource(..))
+import Data.Daft.Vinyl.TypeLevel (RDistinct, RIntersection, RUnion)
 import Data.Default (Default(..))
 import Data.List (intercalate, nub)
 import Data.List.Split (splitOn)
 import Data.List.Util (elemPermutation)
-import Data.Maybe (fromJust, isNothing)
+import Data.Maybe (catMaybes, fromJust, isNothing)
 import Data.Proxy (Proxy(Proxy))
 import Data.String (IsString(..))
 import Data.String.ToString (ToString(..))
@@ -50,6 +53,7 @@ import Data.Vinyl.Lens (type (∈), type (⊆), rcast, rget)
 import Data.Vinyl.TypeLevel (RecAll, type (++))
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 
+import qualified Data.Daft.Vinyl.Join as J (crossJoin, naturalJoin)
 import qualified Data.Vinyl.Derived as V (getField)
 
 
@@ -193,3 +197,15 @@ writeFieldRecSource TextData{..} =
 writeFieldRecSource BuiltinData{..} =
   const
     $ throwError "Cannot write records to built-in data source."
+
+
+naturalJoin :: forall ks as bs cs proxy
+            .  (Eq (FieldRec ks), ks ⊆ as, ks ⊆ bs, RUnion as bs cs, RIntersection as bs ks)
+            => proxy ks -> [FieldRec as] -> [FieldRec bs] -> [FieldRec cs]
+-- FIXME: We could simplify the constaints if the type system could make inteferences about the relationships between unions, intersections, and subsets.
+naturalJoin = ((catMaybes .) .) . liftA2 . J.naturalJoin -- FIXME: This is an O(n^2) algorithm!  Would it be worthwhile to use 'Data.MultiMap' to organize intermediate computations?
+
+
+crossJoin :: (RUnion as bs cs, RDistinct as bs)
+          => [FieldRec as] -> [FieldRec bs] -> [FieldRec cs]
+crossJoin = liftA2 J.crossJoin
