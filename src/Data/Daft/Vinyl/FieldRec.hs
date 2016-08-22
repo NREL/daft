@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE PolyKinds           #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
@@ -21,7 +22,9 @@ module Data.Daft.Vinyl.FieldRec (
 , showFieldRec
 , showFieldRecs
 , readFieldRecFile
+, readFieldRecSource
 , writeFieldRecFile
+, writeFieldRecSource
 ) where
 
 
@@ -30,6 +33,7 @@ import Control.Monad (liftM2)
 import Control.Monad.Except (MonadError, MonadIO, throwError)
 import Control.Monad.Except.Util (tryIO)
 import Data.Daft.Keyed (Keyed(..))
+import Data.Daft.Source (DataSource(..))
 import Data.Default (Default(..))
 import Data.List (intercalate, nub)
 import Data.List.Split (splitOn)
@@ -163,8 +167,29 @@ readFieldRecFile =
     . tryIO . readFile
 
 
+readFieldRecSource :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => DataSource a -> m [FieldRec fields]
+readFieldRecSource FileData{..}    = readFieldRecFile filePath
+readFieldRecSource TextData{..}    = readFieldRecs . fmap (splitOn "\t") $ lines parsableText
+readFieldRecSource BuiltinData{..} = throwError "Cannot read records from built-in data source."
+
+
 writeFieldRecFile :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => FilePath -> [FieldRec fields] -> m ()
 writeFieldRecFile =
   (tryIO .)
-    . (. (unlines . map (intercalate "\t") . showFieldRecs))
+    . (. (unlines . fmap (intercalate "\t") . showFieldRecs))
     . writeFile
+
+
+writeFieldRecSource :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => DataSource a -> [FieldRec fields] -> m (Maybe String)
+writeFieldRecSource FileData{..} =
+  (>> return Nothing)
+    . writeFieldRecFile filePath
+writeFieldRecSource TextData{..} =
+  return
+    . Just
+    . unlines
+    . fmap (intercalate "\t")
+    . showFieldRecs
+writeFieldRecSource BuiltinData{..} =
+  const
+    $ throwError "Cannot write records to built-in data source."
