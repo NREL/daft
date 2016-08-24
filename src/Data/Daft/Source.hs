@@ -35,6 +35,7 @@ instance Read a => Read (DataSource a) where
   readsPrec n ('t' : 'e' : 'x' : 't' : ' '                         : x) = fmap (first TextData   ) $ readsPrec n x
   readsPrec n ('b' : 'u' : 'i' : 'l' : 't' : '-' : 'i' : 'n' : ' ' : x) = fmap (first BuiltinData) $ readsPrec n x
   readsPrec _ ('n' : 'o' : ' ' : 'd' : 'a' : 't' : 'a' : ' '       : x) = [(NoData, x)]
+  readsPrec _ _                                                         = []
 
 instance Show a => Show (DataSource a) where
   show NoData          = "no data"
