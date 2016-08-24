@@ -12,7 +12,6 @@ module Data.Daft.Vinyl.FunctionRec.Example (
 import Data.Daft.Vinyl.FieldRec ((<:), readFieldRecs, showFieldRecs)
 import Data.Daft.Vinyl.FunctionRec (FunctionRec(..), evaluate', makeTabulatedFunction, naturalJoin, unmakeTabulatedFunction)
 import Data.List (intercalate)
-import Data.Proxy (Proxy(..))
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
 
@@ -97,13 +96,13 @@ main =
   do
     let
       x :: FunctionRec (FieldRec '[StateUSPS]) (FieldRec '[StateName, StateHash])
-      x = naturalJoin (Proxy :: Proxy '[StateUSPS]) states hashStates
+      x = naturalJoin states hashStates
     putStrLn ""
     putStrLn "Example of evaluating a supported function:"
     print $ evaluate' x (sStateUSPS =: "CA")
     let
       y :: FunctionRec (FieldRec '[StateUSPS, CityName]) (FieldRec '[Longitude, Latitude, StateName, StateHash])
-      y = naturalJoin (Proxy :: Proxy '[StateUSPS]) cities x
+      y = naturalJoin cities x
     putStrLn ""
     putStrLn "Result of some joins with tables and supported functions:"
     putStrLn . unlines . fmap (intercalate "\t")

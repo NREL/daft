@@ -1,7 +1,9 @@
 {-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE PolyKinds                 #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 {-# LANGUAGE UndecidableInstances      #-}
@@ -16,13 +18,16 @@ module Data.Daft.Vinyl.TypeLevel (
 , RUnion(..)
 , RIntersection(..)
 , RDifference(..)
+, RJoin(..)
 , NameNotIn
 , UniqueNames
 )  where 
 
 
+import Control.Monad (guard)
 import Data.Daft.TypeLevel (Difference, Elem, Equal, Equiv, Intersection, Nub, Union, Unique)
 import Data.Vinyl.Core (Rec, (<+>))
+import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
@@ -81,6 +86,19 @@ class RDifference as bs cs where
 
 instance (Equiv(Difference as bs) cs ~ 'True, cs ⊆ bs) => RDifference as bs cs where
   rdifference _ = rcast
+
+
+class RJoin as bs cs where
+  rjoin :: FieldRec as -> FieldRec bs -> Maybe (FieldRec cs)
+-- FIXME: GHC will not accept 'Rec f' instead of 'FieldRec' because it cannot infer enough about 'f'.
+
+instance (Eq (FieldRec (Intersection as bs)), Intersection as bs ⊆ as, Intersection as bs ⊆ bs, RUnion as bs cs) => RJoin as bs cs where
+  rjoin xs ys =
+    do
+      guard
+        $ rcast xs == (rcast ys :: FieldRec (Intersection as bs))
+      return
+        $ runion xs ys
 
 
 class NameNotIn n rs

@@ -21,12 +21,12 @@ import Control.Applicative ((<|>))
 import Control.Monad (liftM2)
 import Data.Daft.Keyed (makeKeyed)
 import Data.Daft.Lookup (LookupTable, asLookupTable, assocs)
-import Data.Daft.Vinyl.TypeLevel (RDistinct, RIntersection, RUnion(runion))
+import Data.Daft.TypeLevel (Intersection)
+import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
 import Data.Maybe (catMaybes, fromMaybe, mapMaybe)
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 
-import qualified Data.Daft.Vinyl.Join as J (crossJoin, naturalJoin)
 import qualified Data.Map as M (empty, lookup, mergeWithKey, union)
 
 
@@ -98,22 +98,22 @@ tabulate ks f = asLookupTable $ mapMaybe (liftM2 fmap (,) (evaluate f)) ks
 -- FIXME: Try to unify natural and cross joins into a single function.
 
 
-naturalJoin :: forall kj k1 k2 k3 v1 v2 v3 proxy
-            .  (Eq (FieldRec kj), kj ⊆ k1, kj ⊆ k2, k1 ⊆ k3, k2 ⊆ k3, RUnion k1 k2 k3, RIntersection k1 k2 kj, RUnion v1 v2 v3, RDistinct v1 v2, Ord (FieldRec k1), Ord (FieldRec k2), Ord (FieldRec k3))
-            => proxy kj -> FunctionRec (FieldRec k1) (FieldRec v1) -> FunctionRec (FieldRec k2) (FieldRec v2) -> FunctionRec (FieldRec k3) (FieldRec v3)
+naturalJoin :: forall k1 k2 k3 v1 v2 v3
+            .  (Eq (FieldRec (Intersection k1 k2)), Intersection k1 k2 ⊆ k1, Intersection k1 k2 ⊆ k2, k1 ⊆ k3, k2 ⊆ k3, RUnion k1 k2 k3, RUnion v1 v2 v3, RDistinct v1 v2, Ord (FieldRec k1), Ord (FieldRec k2), Ord (FieldRec k3))
+            => FunctionRec (FieldRec k1) (FieldRec v1) -> FunctionRec (FieldRec k2) (FieldRec v2) -> FunctionRec (FieldRec k3) (FieldRec v3)
 -- FIXME: We could simplify the constaints if the type system could make inteferences about the relationships between unions, intersections, and subsets.
-naturalJoin p (TabulatedFunction t1) (TabulatedFunction t2) =
+naturalJoin (TabulatedFunction t1) (TabulatedFunction t2) =
   -- FIXME: This is an O(n^2) algorithm!  Would it be worthwhile to use 'Data.MultiMap' to organize intermediate computations?
   TabulatedFunction
     . asLookupTable
     $ catMaybes
     [
-      (, v1 `runion` v2) <$> J.naturalJoin p k1 k2
+      (, v1 `runion` v2) <$> rjoin k1 k2
     |
       (k1, v1) <- assocs t1
     , (k2, v2) <- assocs t2
     ]
-naturalJoin _ fr1 fr2 =
+naturalJoin fr1 fr2 =
   SupportedFunction $ \k3 ->
     do
       v1 <- fr1 `evaluate` rcast k3
@@ -129,7 +129,7 @@ crossJoin (TabulatedFunction t1) (TabulatedFunction t2) =
   TabulatedFunction
     $  asLookupTable
     [
-      (k1 `J.crossJoin` k2, v1 `runion` v2)
+      (k1 `runion` k2, v1 `runion` v2)
     |
       (k1, v1) <- assocs t1
     , (k2, v2) <- assocs t2
