@@ -2,8 +2,10 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE Safe                   #-}
 
+{-# OPTIONS_GHC -fno-warn-deprecations #-}
 
-module Data.Daft.Lookup (
+
+module Data.Daft.Lookup {-# DEPRECATED "This module will be removed in a future release." #-} (
   LookupTable
 , keysSet
 , keys

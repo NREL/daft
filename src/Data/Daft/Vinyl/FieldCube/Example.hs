@@ -4,13 +4,14 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 
-module Data.Daft.Vinyl.FunctionRec.Example (
+module Data.Daft.Vinyl.FieldCube.Example (
   main
 ) where
 
 
+import Data.Daft.DataCube (fromFunction)
+import Data.Daft.Vinyl.FieldCube (FieldCube, (⋈), (!), fromRecords, toRecords)
 import Data.Daft.Vinyl.FieldRec ((<:), readFieldRecs, showFieldRecs)
-import Data.Daft.Vinyl.FunctionRec (FunctionRec(..), evaluate', makeTabulatedFunction, naturalJoin, unmakeTabulatedFunction)
 import Data.List (intercalate)
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
@@ -35,7 +36,7 @@ sLatitude  = SField :: SField Latitude
 
 
 -- Some data about states.
-states :: FunctionRec (FieldRec '[StateUSPS]) (FieldRec '[StateName])
+states :: FieldCube '[StateUSPS] '[StateName]
 states =
   let
     statesRaw =
@@ -48,13 +49,13 @@ states =
       ]
     Right stateRecs = readFieldRecs statesRaw :: Either String [FieldRec '[StateName, StateUSPS]]
   in
-    makeTabulatedFunction stateRecs
+    fromRecords stateRecs
 
 
 -- A hash function on state names.
-hashStates :: FunctionRec (FieldRec '[StateUSPS]) (FieldRec '[StateHash])
+hashStates :: FieldCube '[StateUSPS] '[StateHash]
 hashStates =
-  SupportedFunction $ \k ->
+  fromFunction $ \k ->
     let
       stateUSPS = sStateUSPS <: k
     in
@@ -62,7 +63,7 @@ hashStates =
 
 
 -- Some data about cities.
-cities :: FunctionRec (FieldRec '[StateUSPS, CityName]) (FieldRec '[Longitude, Latitude])
+cities :: FieldCube '[StateUSPS, CityName] '[Longitude, Latitude]
 cities =
   let
     citiesRaw =
@@ -76,7 +77,7 @@ cities =
       ]
     Right cityRecs = readFieldRecs citiesRaw :: Either String [FieldRec '[CityName, Latitude, Longitude, StateUSPS]]
   in
-    makeTabulatedFunction cityRecs
+    fromRecords cityRecs
 
 
 -- Some areas of interest.
@@ -95,15 +96,15 @@ main :: IO ()
 main =
   do
     let
-      x :: FunctionRec (FieldRec '[StateUSPS]) (FieldRec '[StateName, StateHash])
-      x = naturalJoin states hashStates
+      x :: FieldCube '[StateUSPS] '[StateName, StateHash]
+      x = states ⋈ hashStates
     putStrLn ""
-    putStrLn "Example of evaluating a supported function:"
-    print $ evaluate' x (sStateUSPS =: "CA")
+    putStrLn "Example of evaluation:"
+    print $ x ! (sStateUSPS =: "CA")
     let
-      y :: FunctionRec (FieldRec '[StateUSPS, CityName]) (FieldRec '[Longitude, Latitude, StateName, StateHash])
-      y = naturalJoin cities x
+      y :: FieldCube '[StateUSPS, CityName] '[Longitude, Latitude, StateName, StateHash]
+      y = cities ⋈ x
     putStrLn ""
-    putStrLn "Result of some joins with tables and supported functions:"
+    putStrLn "Result of some joins with tables and functions:"
     putStrLn . unlines . fmap (intercalate "\t")
-      $ showFieldRecs (unmakeTabulatedFunction interest y :: [FieldRec '[StateUSPS, StateName, StateHash, CityName, Longitude, Latitude]])
+      $ showFieldRecs (toRecords interest y :: [FieldRec '[StateUSPS, StateName, StateHash, CityName, Longitude, Latitude]])

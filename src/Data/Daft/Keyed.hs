@@ -2,7 +2,7 @@
 {-# LANGUAGE Safe            #-}
 
 
-module Data.Daft.Keyed (
+module Data.Daft.Keyed {-# DEPRECATED "This module will be removed in a future release." #-} (
   Keyed(..)
 , makeKeyed
 , asPair

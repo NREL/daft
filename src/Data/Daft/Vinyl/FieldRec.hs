@@ -13,8 +13,6 @@
 module Data.Daft.Vinyl.FieldRec (
   fieldMap'
 , (<:)
-, keyed
-, unkeyed
 , labels
 , readFieldRec
 , readFieldRecCheckingLabels
@@ -34,7 +32,6 @@ import Control.Applicative (liftA2)
 import Control.Monad (liftM2)
 import Control.Monad.Except (MonadError, MonadIO, throwError)
 import Control.Monad.Except.Util (tryIO)
-import Data.Daft.Keyed (Keyed(..))
 import Data.Daft.Source (DataSource(..))
 import Data.Daft.TypeLevel (Intersection)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
@@ -47,11 +44,11 @@ import Data.Proxy (Proxy(Proxy))
 import Data.String (IsString(..))
 import Data.String.ToString (ToString(..))
 import Data.String.Util (readExcept)
-import Data.Vinyl.Core (Dict(..), Rec(..), (<+>), recordToList, reifyConstraint, rmap)
+import Data.Vinyl.Core (Dict(..), Rec(..), recordToList, reifyConstraint, rmap)
 import Data.Vinyl.Derived (ElField(..), FieldRec)
 import Data.Vinyl.Functor (Compose(Compose), Const(Const))
-import Data.Vinyl.Lens (type (∈), type (⊆), rcast, rget)
-import Data.Vinyl.TypeLevel (RecAll, type (++))
+import Data.Vinyl.Lens (type (∈), type (⊆), rget)
+import Data.Vinyl.TypeLevel (RecAll)
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 
 import qualified Data.Vinyl.Derived as V (getField)
@@ -65,16 +62,6 @@ fieldMap' f (Field x) = Field (f x)
 -- Extract a field's data from a record.
 (<:) :: ('(s, t) ∈ rs) => sing '(s, t) -> FieldRec rs -> t
 (<:) p r = V.getField (rget p r)
-
-
--- Separate a key and value from a record.
-keyed :: (ks ⊆ rs, vs ⊆ rs) => FieldRec rs -> Keyed (FieldRec ks) (FieldRec vs)
-keyed = liftA2 Keyed rcast rcast
-
-
--- Merge a key and value into a record
-unkeyed :: Keyed (FieldRec ks) (FieldRec vs) -> FieldRec (ks ++ vs)
-unkeyed (Keyed k v) = k <+> v
 
 
 -- Extract the labels from a record.
