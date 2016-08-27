@@ -12,7 +12,7 @@ module Data.Daft.Vinyl.FieldCube.Example (
 import Data.Daft.DataCube (fromFunction)
 import Data.Daft.Vinyl.FieldCube (FieldCube, (⋈), (!), fromRecords, toRecords)
 import Data.Daft.Vinyl.FieldRec ((<:), readFieldRecs, showFieldRecs)
-import Data.List (intercalate)
+import Data.List.Util.Listable (toTabbeds)
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
 
@@ -106,5 +106,5 @@ main =
       y = cities ⋈ x
     putStrLn ""
     putStrLn "Result of some joins with tables and functions:"
-    putStrLn . unlines . fmap (intercalate "\t")
+    putStrLn . toTabbeds
       $ showFieldRecs (toRecords interest y :: [FieldRec '[StateUSPS, StateName, StateHash, CityName, Longitude, Latitude]])

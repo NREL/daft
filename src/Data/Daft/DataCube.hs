@@ -1,30 +1,34 @@
-{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE RecordWildCards       #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TupleSections         #-}
 {-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
 
 
 module Data.Daft.DataCube (
+-- * Types
   DataCube
+, Gregator(..)
+, Joiner(..)
+-- * Conversion
 , fromTable
 , fromFunction
 , toTable
 , knownKeys
+-- * Evaluation
 , evaluate
 , evaluable
+-- * Selection
 , select
 , selectWithKey
 , selectKeys
+-- * Projection
 , project
 , projectWithKey
 , projectKeys
-, Gregator(..)
+-- * Aggregation
 , fromKnownKeys
 , aggregate
 , aggregateWithKey
-, Joiner(..)
+-- * Joins
 , join
 , semijoin
 , antijoin
@@ -86,7 +90,7 @@ toTable :: (IsList ks, k ~ Item ks, IsList as, a ~ Item as, Ord k) => (k -> v ->
 toTable combiner ks cube = L.fromList $ mapMaybe (evaluate $ projectWithKey combiner cube) $ L.toList ks
 
 
-knownKeys :: IsList ks => DataCube (Item ks) v -> ks
+knownKeys :: (IsList ks, k ~ Item ks) => DataCube k v -> ks
 knownKeys = projectKeys id
 
 
@@ -120,16 +124,16 @@ selectKeys :: (k -> Bool) -> DataCube k v -> DataCube k v
 selectKeys = selectWithKey . (const .)
 
 
-project :: (v -> w) -> DataCube k v -> DataCube k w
+project :: (v -> v') -> DataCube k v -> DataCube k v'
 project = projectWithKey . const
 
 
-projectWithKey :: (k -> v -> w) -> DataCube k v -> DataCube k w
+projectWithKey :: (k -> v -> v') -> DataCube k v -> DataCube k v'
 projectWithKey projector TableCube{..} = TableCube $ M.mapWithKey projector table
 projectWithKey projector FunctionCube{..} = FunctionCube $ liftA2 fmap projector function
 
 
-projectKeys :: IsList ks => (k -> Item ks) -> DataCube k v -> ks
+projectKeys :: (IsList ks, k ~ Item ks) => (k -> k) -> DataCube k v -> ks
 projectKeys projector TableCube{..}    = L.fromList . fmap projector $ M.keys table
 projectKeys _         FunctionCube{..} = L.fromList []
 

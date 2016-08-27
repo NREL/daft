@@ -23,8 +23,7 @@ module Data.Daft.Vinyl.FieldRec (
 , readFieldRecSource
 , writeFieldRecFile
 , writeFieldRecSource
-, naturalJoin
-, crossJoin
+, join
 ) where
 
 
@@ -34,11 +33,11 @@ import Control.Monad.Except (MonadError, MonadIO, throwError)
 import Control.Monad.Except.Util (tryIO)
 import Data.Daft.Source (DataSource(..))
 import Data.Daft.TypeLevel (Intersection)
-import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
+import Data.Daft.Vinyl.TypeLevel (RJoin(rjoin), RUnion)
 import Data.Default (Default(..))
-import Data.List (intercalate, nub)
-import Data.List.Split (splitOn)
+import Data.List (nub)
 import Data.List.Util (elemPermutation)
+import Data.List.Util.Listable (fromTabbeds, toTabbeds)
 import Data.Maybe (catMaybes, fromJust, isNothing)
 import Data.Proxy (Proxy(Proxy))
 import Data.String (IsString(..))
@@ -154,13 +153,13 @@ showFieldRecs dataRows =
 
 readFieldRecFile :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => FilePath -> m [FieldRec fields]
 readFieldRecFile =
-  ((readFieldRecs . fmap (splitOn "\t") . lines) =<<)
+  ((readFieldRecs . fromTabbeds) =<<)
     . tryIO . readFile
 
 
 readFieldRecSource :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => DataSource a -> m [FieldRec fields]
 readFieldRecSource FileData{..}    = readFieldRecFile filePath
-readFieldRecSource TextData{..}    = readFieldRecs . fmap (splitOn "\t") $ lines parsableText
+readFieldRecSource TextData{..}    = readFieldRecs $ fromTabbeds parsableText
 readFieldRecSource BuiltinData{..} = throwError "Cannot read records from built-in data source."
 readFieldRecSource NoData          = return []
 
@@ -168,7 +167,7 @@ readFieldRecSource NoData          = return []
 writeFieldRecFile :: (IsString e, MonadError e m, MonadIO m, InternalDefault (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => FilePath -> [FieldRec fields] -> m ()
 writeFieldRecFile =
   (tryIO .)
-    . (. (unlines . fmap (intercalate "\t") . showFieldRecs))
+    . (. (toTabbeds . showFieldRecs))
     . writeFile
 
 
@@ -179,8 +178,7 @@ writeFieldRecSource FileData{..} =
 writeFieldRecSource TextData{..} =
   return
     . Just
-    . unlines
-    . fmap (intercalate "\t")
+    . toTabbeds
     . showFieldRecs
 writeFieldRecSource BuiltinData{..} =
   const
@@ -190,13 +188,8 @@ writeFieldRecSource NoData =
     $ return Nothing
 
 
-naturalJoin :: forall as bs cs
-            .  (Eq (FieldRec (Intersection as bs)), Intersection as bs ⊆ as, Intersection as bs ⊆ bs, RUnion as bs cs)
-            => [FieldRec as] -> [FieldRec bs] -> [FieldRec cs]
+join :: forall as bs cs
+     .  (Eq (FieldRec (Intersection as bs)), Intersection as bs ⊆ as, Intersection as bs ⊆ bs, RUnion as bs cs)
+     => [FieldRec as] -> [FieldRec bs] -> [FieldRec cs]
 -- FIXME: We could simplify the constaints if the type system could make inteferences about the relationships between unions, intersections, and subsets.
-naturalJoin = (catMaybes .) . liftA2 rjoin -- FIXME: This is an O(n^2) algorithm!  Would it be worthwhile to use 'Data.MultiMap' to organize intermediate computations?
-
-
-crossJoin :: (RUnion as bs cs, RDistinct as bs)
-          => [FieldRec as] -> [FieldRec bs] -> [FieldRec cs]
-crossJoin = liftA2 runion
+join = (catMaybes .) . liftA2 rjoin -- FIXME: This is an O(n^2) algorithm!  Would it be worthwhile to use 'Data.MultiMap' to organize intermediate computations?

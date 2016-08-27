@@ -1,22 +1,24 @@
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE TupleSections         #-}
-{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 
 
 module Data.Daft.Vinyl.FieldCube (
+-- * Types
   FieldCube
+, FieldGregator
+-- * Conversion
 , fromRecords
 , toRecords
+-- * Evaluation
 , (!)
+-- * Selection, projection, and aggregation
 , σ
 , π
 , κ
+-- * Joins
 , (⋈)
 , (⋉)
 , (▷)
-, FieldGregator
-, module Data.Daft.DataCube
 ) where
 
 
@@ -27,7 +29,7 @@ import Data.Maybe (fromMaybe)
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 
-import qualified Data.Daft.DataCube as C
+import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromTable, join, projectWithKey, selectWithKey, semijoin, toTable)
 
 
 type FieldCube ks vs = DataCube (FieldRec ks) (FieldRec vs)
@@ -60,16 +62,16 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 κ = C.aggregateWithKey
 
 
-(⋈) :: (Eq (FieldRec (Intersection k1 k2)), Intersection k1 k2 ⊆ k1, Intersection k1 k2 ⊆ k2, k1 ⊆ k3, k2 ⊆ k3, RUnion k1 k2 k3, RUnion v1 v2 v3, RDistinct v1 v2, Ord (FieldRec k1), Ord (FieldRec k2), Ord (FieldRec k3))
-    => FieldCube k1 v1 -> FieldCube k2 v2 -> FieldCube k3 v3
+(⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k))
+    => FieldCube kLeft vLeft -> FieldCube kRight vRight -> FieldCube k v
 (⋈) = C.join (C.Joiner rjoin rcast rcast) runion
 
 
-(⋉) :: (Ord (FieldRec k2), k2 ⊆ k1)
-    => FieldCube k1 v1 -> FieldCube k2 v2 -> FieldCube k1 v1
+(⋉) :: (Ord (FieldRec kRight), kRight ⊆ kLeft)
+    => FieldCube kLeft vLeft -> FieldCube kRight vRight -> FieldCube kLeft vLeft
 (⋉) = C.semijoin $ C.Joiner undefined undefined rcast
 
 
-(▷) :: (Ord (FieldRec k2), k2 ⊆ k1)
-    => FieldCube k1 v1 -> FieldCube k2 v2 -> FieldCube k1 v1
+(▷) :: (Ord (FieldRec kRight), kRight ⊆ kLeft)
+    => FieldCube kLeft vLeft -> FieldCube kRight vRight -> FieldCube kLeft vLeft
 (▷) = C.antijoin $ C.Joiner undefined undefined rcast

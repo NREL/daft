@@ -1,5 +1,5 @@
 name:                daft
-version:             0.4.10.0
+version:             0.4.10.2
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -15,7 +15,6 @@ library
                     Data.Daft.Vinyl.FieldCube
                     Data.Daft.Vinyl.FieldCube.Example
                     Data.Daft.Vinyl.FieldRec
-                    Data.Daft.Vinyl.Join
                     Data.Daft.Vinyl.Rec
                     Data.Daft.Vinyl.TypeLevel
                     Data.Daft.Vinyl.TypeLevel.Test
@@ -23,11 +22,9 @@ library
                   , aeson
                   , containers
                   , data-default
-                  , lens
                   , mtl
                   -- The "raft" package is available at <https://bitbucket.org/functionally/raft>.
                   , raft
-                  , split
                   , tostring
                   , type-list
                   , vinyl
