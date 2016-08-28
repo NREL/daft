@@ -35,6 +35,7 @@ module Data.Daft.Vinyl.FieldCube (
 import Data.Daft.DataCube (DataCube)
 import Data.Daft.TypeLevel (Intersection)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
+import Data.List (nub)
 import Data.Maybe (fromMaybe)
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
@@ -71,8 +72,8 @@ toRecords = C.toTable runion
 type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 
 
-κ :: (ks ⊆ ks0, ks' ⊆ ks, Ord (FieldRec ks')) => [FieldRec ks0] -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
-κ = C.aggregateWithKey . C.fromKnownKeys rcast . map rcast
+κ :: (ks ⊆ ks0, ks' ⊆ ks, Eq (FieldRec ks), Ord (FieldRec ks')) => [FieldRec ks0] -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
+κ = C.aggregateWithKey . C.fromKnownKeys rcast . nub . fmap rcast
 
 
 (⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k)) -- FIXME: This can be simplified somewhat.
