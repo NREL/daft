@@ -6,6 +6,7 @@
 module Data.Daft.DataCube (
 -- * Types
   DataCube
+, Rekeyer(..)
 , Gregator(..)
 , Joiner(..)
 -- * Conversion
@@ -24,6 +25,7 @@ module Data.Daft.DataCube (
 , project
 , projectWithKey
 , projectKeys
+, rekey
 -- * Aggregation
 , fromKnownKeys
 , aggregate
@@ -42,7 +44,7 @@ import Data.Map (Map)
 import Data.Maybe (catMaybes, isJust, mapMaybe)
 import GHC.Exts (IsList(Item))
 
-import qualified Data.Map as M (assocs, empty, filterWithKey, fromList, fromListWith, keys, lookup, mapWithKey, member, mergeWithKey, union)
+import qualified Data.Map as M (assocs, empty, filterWithKey, fromList, fromListWith, keys, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, union)
 import qualified GHC.Exts as L (IsList(..))
 
 
@@ -136,6 +138,19 @@ projectWithKey projector FunctionCube{..} = FunctionCube $ liftA2 fmap projector
 projectKeys :: (IsList ks, k ~ Item ks) => (k -> k) -> DataCube k v -> ks
 projectKeys projector TableCube{..}    = L.fromList . fmap projector $ M.keys table
 projectKeys _         FunctionCube{..} = L.fromList []
+
+
+data Rekeyer a b =
+  Rekeyer
+  {
+    rekeyer   :: a -> b
+  , unrekeyer :: b -> a
+  }
+
+
+rekey :: Ord k' => Rekeyer k k' -> DataCube k v -> DataCube k' v
+rekey Rekeyer{..} TableCube{..}    = TableCube $ M.mapKeysWith (const id) rekeyer table
+rekey Rekeyer{..} FunctionCube{..} = FunctionCube $ function . unrekeyer
 
 
 data Gregator a b =
