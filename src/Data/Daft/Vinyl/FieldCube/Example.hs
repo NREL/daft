@@ -12,10 +12,9 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 import Data.Daft.DataCube (fromFunction)
 import Data.Daft.Vinyl.FieldCube (type (↝), (⋈), (!), fromRecords, toRecords)
-import Data.Daft.Vinyl.FieldRec ((<:), readFieldRecs, showFieldRecs)
+import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:), readFieldRecs, showFieldRecs)
 import Data.List.Util.Listable (toTabbeds)
-import Data.Vinyl.Core ((<+>))
-import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
+import Data.Vinyl.Derived (FieldRec, SField(..))
 import Data.Vinyl.Lens (rcast)
 
 
