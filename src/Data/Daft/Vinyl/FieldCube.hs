@@ -1,5 +1,6 @@
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies     #-}
+{-# LANGUAGE TypeOperators    #-}
 
 
 module Data.Daft.Vinyl.FieldCube (
@@ -33,7 +34,7 @@ module Data.Daft.Vinyl.FieldCube (
 
 
 import Data.Daft.DataCube (DataCube)
-import Data.Daft.TypeLevel (Intersection)
+import Data.Daft.TypeLevel (Intersection, Union)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
 import Data.Maybe (fromMaybe)
 import Data.Vinyl.Derived (FieldRec)
@@ -52,7 +53,7 @@ fromRecords :: (ks ⊆ as, vs ⊆ as, Ord (FieldRec ks)) => [FieldRec as] -> Fie
 fromRecords = C.fromTable rcast rcast
 
 
-toRecords :: (Ord (FieldRec ks), RUnion ks vs as) => [FieldRec ks] -> FieldCube ks vs -> [FieldRec as]
+toRecords :: (Ord (FieldRec ks), RUnion ks vs as, Union ks vs ~ as) => [FieldRec ks] -> FieldCube ks vs -> [FieldRec as]
 toRecords = C.toTable runion
 
 
