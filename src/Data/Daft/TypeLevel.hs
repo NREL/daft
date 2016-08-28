@@ -14,11 +14,12 @@ module Data.Daft.TypeLevel (
 , Union
 , Intersection
 , Difference
+, Reverse
 )  where 
 
 
 import Data.Type.Bool (If, Not, type (&&))
-import Data.Type.List (Difference, Find, Remove, Union)
+import Data.Type.List (Difference, Find, Remove, Reverse, Union)
 
 
 type family Equal (a :: k) (b :: k) :: Bool where
@@ -38,7 +39,7 @@ type family Unique as :: Bool where
 
 
 type family Equiv as bs where
-  Equiv '[]       '[] = 'True
+  Equiv as        as = 'True
   Equiv '[]       bs  = 'False
   Equiv (a ': as) bs  = If (Elem a bs) (Equiv as (Remove a bs)) 'False
 

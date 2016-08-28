@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds                       #-}
+{-# LANGUAGE TypeOperators                   #-}
 
 {-# OPTIONS_GHC -fno-warn-unused-binds       #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -10,11 +11,12 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 
 import Data.Daft.DataCube (fromFunction)
-import Data.Daft.Vinyl.FieldCube (FieldCube, (⋈), (!), fromRecords, toRecords)
+import Data.Daft.Vinyl.FieldCube (type (↝), (⋈), (!), fromRecords, toRecords)
 import Data.Daft.Vinyl.FieldRec ((<:), readFieldRecs, showFieldRecs)
 import Data.List.Util.Listable (toTabbeds)
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec, SField(..), (=:))
+import Data.Vinyl.Lens (rcast)
 
 
 -- Types for field names.
@@ -36,7 +38,7 @@ sLatitude  = SField :: SField Latitude
 
 
 -- Some data about states.
-states :: FieldCube '[StateUSPS] '[StateName]
+states :: '[StateUSPS] ↝ '[StateName]
 states =
   let
     statesRaw =
@@ -53,7 +55,7 @@ states =
 
 
 -- A hash function on state names.
-hashStates :: FieldCube '[StateUSPS] '[StateHash]
+hashStates :: '[StateUSPS] ↝ '[StateHash]
 hashStates =
   fromFunction $ \k ->
     let
@@ -63,7 +65,7 @@ hashStates =
 
 
 -- Some data about cities.
-cities :: FieldCube '[StateUSPS, CityName] '[Longitude, Latitude]
+cities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude]
 cities =
   let
     citiesRaw =
@@ -96,15 +98,15 @@ main :: IO ()
 main =
   do
     let
-      x :: FieldCube '[StateUSPS] '[StateName, StateHash]
-      x = states ⋈ hashStates
+      x :: '[StateUSPS] ↝ '[StateName, StateHash]
+      x = states ⋈  hashStates
     putStrLn ""
     putStrLn "Example of evaluation:"
     print $ x ! (sStateUSPS =: "CA")
     let
-      y :: FieldCube '[StateUSPS, CityName] '[Longitude, Latitude, StateName, StateHash]
-      y = cities ⋈ x
+      y :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash]
+      y = cities ⋈  x
     putStrLn ""
     putStrLn "Result of some joins with tables and functions:"
     putStrLn . toTabbeds
-      $ showFieldRecs (toRecords interest y :: [FieldRec '[StateUSPS, StateName, StateHash, CityName, Longitude, Latitude]])
+      $ showFieldRecs (rcast <$> toRecords interest y :: [FieldRec '[StateUSPS, StateName, StateHash, CityName, Longitude, Latitude]])

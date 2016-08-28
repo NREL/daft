@@ -25,7 +25,7 @@ module Data.Daft.Vinyl.TypeLevel (
 
 
 import Control.Monad (guard)
-import Data.Daft.TypeLevel (Difference, Elem, Equal, Equiv, Intersection, Nub, Union, Unique)
+import Data.Daft.TypeLevel (Difference, Elem, Equal, Intersection, Nub, Reverse, Union, Unique)
 import Data.Vinyl.Core (Rec, (<+>))
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
@@ -63,28 +63,28 @@ instance Intersection as bs ~ '[] => RDistinct as bs
 class RNub as bs where
   rnub :: Rec f as -> Rec f bs
 
-instance (Equiv (Nub as) bs ~ 'True, bs ⊆ as) => RNub as bs where
+instance (Reverse (Nub (Reverse as)) ~ bs, bs ⊆ as) => RNub as bs where
   rnub = rcast
 
 
 class RUnion as bs cs where
   runion :: Rec f as -> Rec f bs -> Rec f cs
 
-instance (Equiv (Union as bs) cs ~ 'True, cs ⊆ (as ++ bs)) => RUnion as bs cs where
+instance (Union (Reverse bs) as ~ cs, cs ⊆ (as ++ bs)) => RUnion as bs cs where
   runion xs ys = rcast $ xs <+> ys
 
 
 class RIntersection as bs cs where
  rintersection :: Rec f as -> Rec f bs -> Rec f cs
 
-instance (Equiv (Intersection as bs) cs ~ 'True, cs ⊆ as) => RIntersection as bs cs where
+instance (Intersection as bs ~ cs, cs ⊆ as) => RIntersection as bs cs where
   rintersection xs _ = rcast xs
 
 
 class RDifference as bs cs where
  rdifference :: Rec f as -> Rec f bs -> Rec f cs
 
-instance (Equiv(Difference as bs) cs ~ 'True, cs ⊆ bs) => RDifference as bs cs where
+instance (Difference as bs ~ cs, cs ⊆ bs) => RDifference as bs cs where
   rdifference _ = rcast
 
 

@@ -103,10 +103,10 @@ testNub4 = rnub
 testNub5 :: Rec f '[A, A, B] -> Rec f '[A, B]
 testNub5 = rnub
 
-testNub6 :: Rec f '[A, B, A] -> Rec f '[B, A]
+testNub6 :: Rec f '[A, B, A] -> Rec f '[A, B]
 testNub6 = rnub
 
-testNub7 :: Rec f '[A, B, A] -> Rec f '[A, B]
+testNub7 :: Rec f '[A, B, C, A] -> Rec f '[A, B, C]
 testNub7 = rnub
 
 -- The following correctly do not type check.
@@ -119,6 +119,9 @@ testNub9 = rnub
 
 testNub10 :: Rec f '[B, A, B] -> Rec f '[B]
 testNub10 = rnub
+
+testNub11 :: Rec f '[A, B, A] -> Rec f '[B, A]
+testNub11 = rnub
 -}
 
 
@@ -139,28 +142,40 @@ testUnion4 = runion
 testUnion5 :: Rec f '[A] -> Rec f '[B] -> Rec f '[A, B]
 testUnion5 = runion
 
-testUnion6 :: Rec f '[A] -> Rec f '[B] -> Rec f '[B, A]
+testUnion6 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B]
 testUnion6 = runion
 
-testUnion7 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[B, A]
-testUnion7 = runion
-
-testUnion8 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[B, A, C]
+testUnion8 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B, C]
 testUnion8 = runion
+
+testUnion9 :: Rec f '[A, B] -> Rec f '[A, C, B] -> Rec f '[A, B, C]
+testUnion9 = runion
+
+testUnion10 :: Rec f '[A, B] -> Rec f '[C, D, A] -> Rec f '[A, B, C, D]
+testUnion10 = runion
 
 -- The following correctly do not type check.
 {-
-testUnion9 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
-testUnion9 = runion
-
-testUnion10 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
-testUnion10 = runion
-
-testUnion11 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
+testUnion11 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
 testUnion11 = runion
 
-testUnion12 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
+testUnion12 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
 testUnion12 = runion
+
+testUnion13 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
+testUnion13 = runion
+
+testUnion14 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
+testUnion14 = runion
+
+testUnion15 :: Rec f '[A] -> Rec f '[B] -> Rec f '[B, A]
+testUnion15 = runion
+
+testUnion16 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[B, A]
+testUnion16 = runion
+
+testUnion17 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[B, A, C]
+testUnion17 = runion
 -}
 
 
@@ -184,25 +199,31 @@ testIntersection5 = rintersection
 testIntersection6 :: Rec f '[A, C] -> Rec f '[B, C] -> Rec f '[C]
 testIntersection6 = rintersection
 
-testIntersection7 :: Rec f '[A, B] -> Rec f '[B, A] -> Rec f '[B, A]
+testIntersection7 :: Rec f '[A, B] -> Rec f '[B, A] -> Rec f '[A, B]
 testIntersection7 = rintersection
 
-testIntersection8 :: Rec f '[A, B] -> Rec f '[C, B, A] -> Rec f '[B, A]
+testIntersection8 :: Rec f '[A, B] -> Rec f '[C, B, A] -> Rec f '[A, B]
 testIntersection8 = rintersection
+
+testIntersection9 :: Rec f '[A, B, C] -> Rec f '[C, B, A] -> Rec f '[A, B, C]
+testIntersection9 = rintersection
+
+testIntersection10 :: Rec f '[A, B, C, D] -> Rec f '[C, D, B, A] -> Rec f '[A, B, C, D]
+testIntersection10 = rintersection
 
 -- The following correctly do not type check.
 {-
-testIntersection9 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
-testIntersection9 = rintersection
-
-testIntersection10 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
-testIntersection10 = rintersection
-
-testIntersection11 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
+testIntersection11 :: Rec f '[A, B] -> Rec f '[C] -> Rec f '[A, B]
 testIntersection11 = rintersection
 
-testIntersection12 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
+testIntersection12 :: Rec f '[A, B] -> Rec f '[A, C] -> Rec f '[A, B]
 testIntersection12 = rintersection
+
+testIntersection13 :: Rec f '[B] -> Rec f '[A, C] -> Rec f '[A, B]
+testIntersection13 = rintersection
+
+testIntersection14 :: Rec f '[A, B] -> Rec f '[B] -> Rec f '[A, B, B]
+testIntersection14 = rintersection
 -}
 
 
@@ -223,16 +244,20 @@ testDifference4 = rdifference
 testDifference5 :: Rec f '[A] -> Rec f '[B, A] -> Rec f '[B]
 testDifference5 = rdifference
 
--- The following correctly do not type check.
-{-
-testDifference6 :: Rec f '[B] -> Rec f '[] -> Rec f '[B]
+testDifference6 :: Rec f '[A] -> Rec f '[A, B, C] -> Rec f '[B, C]
 testDifference6 = rdifference
 
-testDifference7 :: Rec f '[B] -> Rec f '[C] -> Rec f '[B]
+-- The following correctly do not type check.
+{-
+testDifference7 :: Rec f '[B] -> Rec f '[] -> Rec f '[B]
 testDifference7 = rdifference
+
+testDifference8 :: Rec f '[B] -> Rec f '[C] -> Rec f '[B]
+testDifference8 = rdifference
 -}
 
 
 type A = '("A", Double)
 type B = '("B", Double)
 type C = '("C", Double)
+type D = '("D", Double)
