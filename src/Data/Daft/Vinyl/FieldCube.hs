@@ -48,7 +48,7 @@ type ks ↝ vs = FieldCube ks vs
 type FieldCube ks vs = DataCube (FieldRec ks) (FieldRec vs)
 
 
-fromRecords :: (ks ⊆ as, vs ⊆ as, Ord (FieldRec ks)) => [FieldRec as] -> FieldCube ks vs
+fromRecords :: (ks ⊆ as, vs ⊆ as, RUnion ks vs as, Ord (FieldRec ks)) => [FieldRec as] -> FieldCube ks vs
 fromRecords = C.fromTable rcast rcast
 
 

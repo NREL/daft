@@ -49,7 +49,7 @@ states =
       , ["\"NM\""    , "\"New Mexico\"" ]
       , ["\"CO\""    , "\"Colorado\""   ]
       ]
-    Right stateRecs = readFieldRecs statesRaw :: Either String [FieldRec '[StateName, StateUSPS]]
+    Right stateRecs = readFieldRecs statesRaw :: Either String [FieldRec '[StateUSPS, StateName]]
   in
     fromRecords stateRecs
 
@@ -77,7 +77,7 @@ cities =
       , ["\"CO\""    , "\"Golden\""       , "-105.2211"      , "39.7555"       ]
       , ["\"CO\""    , "\"Denver\""       , "-104.9903"      , "39.7392"       ]
       ]
-    Right cityRecs = readFieldRecs citiesRaw :: Either String [FieldRec '[CityName, Latitude, Longitude, StateUSPS]]
+    Right cityRecs = readFieldRecs citiesRaw :: Either String [FieldRec '[StateUSPS, CityName, Longitude, Latitude]]
   in
     fromRecords cityRecs
 
