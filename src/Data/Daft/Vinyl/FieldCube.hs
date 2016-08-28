@@ -10,7 +10,6 @@ module Data.Daft.Vinyl.FieldCube (
 -- * Conversion
 , fromRecords
 , toRecords
-, fromKnownKeys'
 -- * Evaluation
 , (!)
 -- * Selection, projection, and aggregation
@@ -72,12 +71,8 @@ toRecords = C.toTable runion
 type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 
 
-fromKnownKeys' :: (ks' ⊆ ks, Eq (FieldRec ks')) => [FieldRec ks] -> FieldGregator ks ks'
-fromKnownKeys' = C.fromKnownKeys rcast
-
-
-κ :: Ord (FieldRec ks') => FieldGregator ks ks' -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
-κ = C.aggregateWithKey
+κ :: (ks ⊆ ks0, ks' ⊆ ks, Ord (FieldRec ks')) => [FieldRec ks0] -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
+κ = C.aggregateWithKey . C.fromKnownKeys rcast . map rcast
 
 
 (⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k)) -- FIXME: This can be simplified somewhat.
