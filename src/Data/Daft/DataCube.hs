@@ -135,7 +135,7 @@ projectWithKey projector TableCube{..} = TableCube $ M.mapWithKey projector tabl
 projectWithKey projector FunctionCube{..} = FunctionCube $ liftA2 fmap projector function
 
 
-projectKeys :: (IsList ks, k ~ Item ks) => (k -> k) -> DataCube k v -> ks
+projectKeys :: (IsList ks', k' ~ Item ks') => (k -> k') -> DataCube k v -> ks'
 projectKeys projector TableCube{..}    = L.fromList . fmap projector $ M.keys table
 projectKeys _         FunctionCube{..} = L.fromList []
 
