@@ -10,6 +10,7 @@ module Data.Daft.Vinyl.FieldCube (
 -- * Conversion
 , fromRecords
 , toRecords
+, fromKnownKeys'
 -- * Evaluation
 , (!)
 -- * Selection, projection, and aggregation
@@ -39,7 +40,7 @@ import Data.Maybe (fromMaybe)
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 
-import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromTable, join, projectWithKey, selectWithKey, semijoin, toTable)
+import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromKnownKeys, fromTable, join, projectWithKey, selectWithKey, semijoin, toTable)
 
 
 type ks ↝ vs = FieldCube ks vs
@@ -69,6 +70,10 @@ toRecords = C.toTable runion
 
 
 type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
+
+
+fromKnownKeys' :: (ks' ⊆ ks, Eq (FieldRec ks')) => [FieldRec ks] -> FieldGregator ks ks'
+fromKnownKeys' = C.fromKnownKeys rcast
 
 
 κ :: Ord (FieldRec ks') => FieldGregator ks ks' -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'

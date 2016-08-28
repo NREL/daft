@@ -161,10 +161,10 @@ data Gregator a b =
   }
 
 
-fromKnownKeys :: Eq k' => (k -> k') -> DataCube k v -> Gregator k k'
-fromKnownKeys aggregator cube =
+fromKnownKeys :: (IsList ks, k ~ Item ks, Eq k') => (k -> k') -> ks -> Gregator k k'
+fromKnownKeys aggregator ks =
   let
-    disaggregator k' = filter ((k' ==) . aggregator) $ knownKeys cube
+    disaggregator k' = filter ((k' ==) . aggregator) $ L.toList ks
   in
     Gregator{..}
 
