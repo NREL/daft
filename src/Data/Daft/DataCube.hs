@@ -14,6 +14,7 @@ module Data.Daft.DataCube (
 , fromFunction
 , toTable
 , knownKeys
+, reify
 -- * Evaluation
 , evaluate
 , evaluable
@@ -94,6 +95,18 @@ toTable combiner ks cube = L.fromList $ mapMaybe (evaluate $ projectWithKey comb
 
 knownKeys :: (IsList ks, k ~ Item ks) => DataCube k v -> ks
 knownKeys = projectKeys id
+
+
+reify :: (Ord k, IsList ks, k ~ Item ks) => ks -> DataCube k v -> DataCube k v
+reify ks cube =
+  TableCube
+    . M.fromList
+    $ catMaybes
+    [
+      (k, ) <$> cube `evaluate` k
+    |
+      k <- L.toList ks
+    ]
 
 
 evaluate :: Ord k => DataCube k v -> k -> Maybe v
