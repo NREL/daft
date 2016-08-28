@@ -4,7 +4,8 @@
 
 module Data.Daft.Vinyl.FieldCube (
 -- * Types
-  FieldCube
+  type (↝)
+, FieldCube
 , FieldGregator
 -- * Conversion
 , fromRecords
@@ -30,6 +31,9 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 
 import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromTable, join, projectWithKey, selectWithKey, semijoin, toTable)
+
+
+type ks ↝ vs = FieldCube ks vs
 
 
 type FieldCube ks vs = DataCube (FieldRec ks) (FieldRec vs)
