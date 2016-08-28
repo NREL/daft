@@ -17,13 +17,17 @@ module Data.Daft.Vinyl.FieldRec (
 , readFieldRec
 , readFieldRecCheckingLabels
 , readFieldRecs
-, showFieldRec
-, showFieldRecs
 , readFieldRecFile
 , readFieldRecSource
+, showFieldRec
+, showFieldRecs
 , writeFieldRecFile
 , writeFieldRecSource
 , join
+-- * Internals
+, InternalDefault
+, InternalLabeled
+, InternalReadFieldRec
 ) where
 
 
