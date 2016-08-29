@@ -7,8 +7,9 @@ module Data.Daft.Vinyl.TypeLevel.Test (
 )  where 
 
 
-import Data.Daft.Vinyl.TypeLevel (RElem(..) , RNonElem(..) , RUnique(..) , RDistinct(..) , RNub(..) , RUnion(..) , RIntersection(..) , RDifference(..))
+import Data.Daft.Vinyl.TypeLevel (RDifference(..), RDistinct(..), RElem(..), RIntersection(..), RJoin(..), RNonElem(..), RNub(..), RUnique(..), RUnion(..))
 import Data.Vinyl.Core (Rec)
+import Data.Vinyl.Derived (FieldRec)
 
 
 -- The following correctly type check.
@@ -255,6 +256,24 @@ testDifference7 = rdifference
 testDifference8 :: Rec f '[B] -> Rec f '[C] -> Rec f '[B]
 testDifference8 = rdifference
 -}
+
+
+-- The following correctly type check.
+--
+testJoin1 :: FieldRec '[] -> FieldRec '[] -> Maybe (FieldRec '[])
+testJoin1 = rjoin
+
+testJoin2 :: FieldRec '[] -> FieldRec '[B] -> Maybe (FieldRec '[B])
+testJoin2 = rjoin
+
+testJoin3 :: FieldRec '[A] -> FieldRec '[] -> Maybe (FieldRec '[A])
+testJoin3 = rjoin
+
+testJoin4 :: FieldRec '[A] -> FieldRec '[B] -> Maybe (FieldRec '[A, B])
+testJoin4 = rjoin
+
+testJoin5 :: FieldRec '[A, B] -> FieldRec '[C, B] -> Maybe (FieldRec '[A, B, C])
+testJoin5 = rjoin
 
 
 type A = '("A", Double)
