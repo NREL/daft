@@ -25,7 +25,7 @@ module Data.Daft.DataCube (
 -- * Projection
 , project
 , projectWithKey
-, projectKeys
+, projectKnownKeys
 , rekey
 -- * Aggregation
 , fromKnownKeys
@@ -39,13 +39,14 @@ module Data.Daft.DataCube (
 
 
 import Control.Applicative ((<|>), liftA2)
-import Control.Arrow ((&&&), (***))
+import Control.Arrow ((&&&), (***), second)
 import Control.Monad (guard)
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes, isJust, mapMaybe)
+import Data.Tuple (swap)
 import GHC.Exts (IsList(Item))
 
-import qualified Data.Map as M (assocs, empty, filterWithKey, fromList, fromListWith, keys, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, union)
+import qualified Data.Map.Strict as M ((!), assocs, empty, filterWithKey, fromList, fromListWith, keys, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, union)
 import qualified GHC.Exts as L (IsList(..))
 
 
@@ -94,7 +95,7 @@ toTable combiner ks cube = L.fromList $ mapMaybe (evaluate $ projectWithKey comb
 
 
 knownKeys :: (IsList ks, k ~ Item ks) => DataCube k v -> ks
-knownKeys = projectKeys id
+knownKeys = projectKnownKeys id
 
 
 reify :: (Ord k, IsList ks, k ~ Item ks) => ks -> DataCube k v -> DataCube k v
@@ -148,9 +149,9 @@ projectWithKey projector TableCube{..} = TableCube $ M.mapWithKey projector tabl
 projectWithKey projector FunctionCube{..} = FunctionCube $ liftA2 fmap projector function
 
 
-projectKeys :: (IsList ks', k' ~ Item ks') => (k -> k') -> DataCube k v -> ks'
-projectKeys projector TableCube{..}    = L.fromList . fmap projector $ M.keys table
-projectKeys _         FunctionCube{..} = L.fromList []
+projectKnownKeys :: (IsList ks', k' ~ Item ks') => (k -> k') -> DataCube k v -> ks'
+projectKnownKeys projector TableCube{..}    = L.fromList . fmap projector $ M.keys table
+projectKnownKeys _         FunctionCube{..} = L.fromList []
 
 
 data Rekeyer a b =
@@ -174,12 +175,23 @@ data Gregator a b =
   }
 
 
-fromKnownKeys :: (IsList ks, k ~ Item ks, Eq k') => (k -> k') -> ks -> Gregator k k'
-fromKnownKeys aggregator ks =
+fromKnownKeys :: (IsList ks, k ~ Item ks, Ord k, Ord k') => (k -> k') -> ks -> Gregator k k'
+fromKnownKeys aggregator' ks =
   let
-    disaggregator k' = filter ((k' ==) . aggregator) $ L.toList ks
+    aggregatorMap =
+      M.fromList
+        $   (id &&& aggregator')
+        <$> L.toList ks
+    disaggregatorMap =
+      M.fromListWith (++)
+        $   second return . swap
+        <$> M.assocs aggregatorMap
   in
-    Gregator{..}
+    Gregator
+    {
+      aggregator = (M.!) aggregatorMap
+    , disaggregator = (M.!) disaggregatorMap
+    }
 
 
 aggregate :: Ord k' => Gregator k k' -> ([v] -> v') -> DataCube k v -> DataCube k' v'
