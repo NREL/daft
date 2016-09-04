@@ -39,7 +39,7 @@ instance Read a => Read (DataSource a) where
 
 instance Show a => Show (DataSource a) where
   show NoData          = "no data"
-  show FileData{..}    = "file "    ++ show filePath
+  show FileData{..}    = "file "    ++ ("\"" ++ filePath ++ "\"")
   show TextData{..}    = "text "    ++ show parsableText
   show BuiltinData{..} = "built-in" ++ show builtin
 

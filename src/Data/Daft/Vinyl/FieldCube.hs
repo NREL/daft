@@ -16,6 +16,7 @@ module Data.Daft.Vinyl.FieldCube (
 , σ
 , π
 , κ
+, ω
 -- * Joins
 , (⋈)
 , (⋉)
@@ -40,7 +41,7 @@ import Data.Maybe (fromMaybe)
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 
-import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromKnownKeys, fromTable, join, projectWithKey, selectWithKey, semijoin, toTable)
+import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromKnownKeys, fromTable, join, projectKeys, projectWithKey, selectWithKey, semijoin, toTable)
 
 
 type ks ↝ vs = FieldCube ks vs
@@ -74,6 +75,10 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 
 κ :: (ks ⊆ ks0, ks' ⊆ ks, Eq (FieldRec ks), Ord (FieldRec ks')) => [FieldRec ks0] -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
 κ = C.aggregateWithKey . C.fromKnownKeys rcast . nub . fmap rcast
+
+
+ω :: (ks' ⊆ ks) => FieldCube ks vs -> [FieldRec ks']
+ω = C.projectKeys rcast
 
 
 (⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k)) -- FIXME: This can be simplified somewhat.
