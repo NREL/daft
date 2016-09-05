@@ -44,9 +44,11 @@ import Control.Arrow ((&&&), (***))
 import Control.Monad (guard)
 import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes, isJust, mapMaybe)
+import Data.Set (Set)
 import GHC.Exts (IsList(Item))
 
-import qualified Data.Map.Strict as M ((!), assocs, empty, filterWithKey, fromList, fromListWith, keys, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, union)
+import qualified Data.Map.Strict as M ((!), assocs, empty, filterWithKey, fromList, fromListWith, keys, keysSet, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, union)
+import qualified Data.Set as S (empty)
 import qualified GHC.Exts as L (IsList(..))
 
 
@@ -99,8 +101,9 @@ toKnownTable combiner TableCube{..}  = L.fromList . map (uncurry combiner) $ M.a
 toKnownTable _        FunctionCube{} = L.fromList []
 
 
-knownKeys :: (IsList ks, k ~ Item ks) => DataCube k v -> ks
-knownKeys = projectKnownKeys id
+knownKeys :: DataCube k v -> Set k
+knownKeys TableCube{..}  = M.keysSet table
+knownKeys FunctionCube{} = S.empty
 
 
 reify :: (Ord k, IsList ks, k ~ Item ks) => ks -> DataCube k v -> DataCube k v
