@@ -13,6 +13,7 @@ module Data.Daft.DataCube (
 , fromTable
 , fromFunction
 , toTable
+, toKnownTable
 , knownKeys
 , reify
 -- * Evaluation
@@ -91,7 +92,12 @@ fromFunction = FunctionCube
 
 
 toTable :: (IsList ks, k ~ Item ks, IsList as, a ~ Item as, Ord k) => (k -> v -> a) -> ks -> DataCube k v -> as
-toTable combiner ks cube = L.fromList $ mapMaybe (evaluate $ projectWithKey combiner cube) $ L.toList ks
+toTable combiner ks cube = L.fromList . mapMaybe (evaluate $ projectWithKey combiner cube) $ L.toList ks
+
+
+toKnownTable :: (IsList as, a ~ Item as, Ord k) => (k -> v -> a) -> DataCube k v -> as
+toKnownTable combiner TableCube{..}  = L.fromList . map (uncurry combiner) $ M.assocs table
+toKnownTable _        FunctionCube{} = L.fromList []
 
 
 knownKeys :: (IsList ks, k ~ Item ks) => DataCube k v -> ks
