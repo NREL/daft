@@ -17,6 +17,7 @@ module Data.Daft.Vinyl.FieldCube (
 , π
 , κ
 , ω
+, ρ
 -- * Joins
 , (⋈)
 , (⋉)
@@ -40,7 +41,7 @@ import Data.Maybe (fromMaybe)
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 
-import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromKnownKeys, fromTable, join, projectKnownKeys, projectWithKey, selectWithKey, semijoin, toTable)
+import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromKnownKeys, fromTable, join, projectKnownKeys, projectWithKey, reify, selectWithKey, semijoin, toTable)
 
 
 type ks ↝ vs = FieldCube ks vs
@@ -67,6 +68,10 @@ toRecords = C.toTable runion
 
 π :: (FieldRec ks -> FieldRec vs -> FieldRec ws) -> FieldCube ks vs -> FieldCube ks ws
 π = C.projectWithKey
+
+
+ρ :: Ord (FieldRec ks) => [FieldRec ks] -> FieldCube ks vs -> FieldCube ks vs
+ρ = C.reify
 
 
 type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
