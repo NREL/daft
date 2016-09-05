@@ -11,6 +11,7 @@ module Data.Daft.Vinyl.FieldCube (
 , fromRecords
 , toRecords
 , toKnownRecords
+, τ
 -- * Evaluation
 , (!)
 -- * Selection, projection, and aggregation
@@ -69,6 +70,10 @@ toKnownRecords :: (Ord (FieldRec ks), RUnion ks vs as) => FieldCube ks vs -> [Fi
 toKnownRecords = C.toKnownTable runion
 
 
+τ :: (b ⊆ a) => FieldRec a -> FieldRec b
+τ = rcast
+
+
 (!) :: Ord (FieldRec ks) => FieldCube ks vs -> FieldRec ks -> FieldRec vs
 (!) = (fromMaybe (error "FieldCube: key not found.") .) . C.evaluate
 
@@ -99,17 +104,20 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 (⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k)) -- FIXME: This can be simplified somewhat.
     => FieldCube kLeft vLeft -> FieldCube kRight vRight -> FieldCube k v
 (⋈) = C.join (C.Joiner rjoin rcast rcast) runion
+infixl 6 ⋈
 
 
 (⋉) :: (Ord (FieldRec kRight), kRight ⊆ kLeft)
     => FieldCube kLeft vLeft -> FieldCube kRight vRight -> FieldCube kLeft vLeft
 (⋉) = C.semijoin $ C.Joiner undefined undefined rcast
+infixl 6 ⋉
 
 
 (▷) :: (Ord (FieldRec kRight), kRight ⊆ kLeft)
     => FieldCube kLeft vLeft -> FieldCube kRight vRight -> FieldCube kLeft vLeft
 (▷) = C.antijoin $ C.Joiner undefined undefined rcast
-
+infixl 6 ▷
 
 (×) :: Set (FieldRec ks) -> Set (FieldRec ks') -> Set (FieldRec (ks ++ ks'))
 (×) s1 s2 = S.fromDistinctAscList $ liftA2 (<+>) (S.toAscList s1) (S.toAscList s2)
+infixl 8 ×
