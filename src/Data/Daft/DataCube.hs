@@ -40,11 +40,10 @@ module Data.Daft.DataCube (
 
 
 import Control.Applicative ((<|>), liftA2)
-import Control.Arrow ((&&&), (***), second)
+import Control.Arrow ((&&&), (***))
 import Control.Monad (guard)
 import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes, isJust, mapMaybe)
-import Data.Tuple (swap)
 import GHC.Exts (IsList(Item))
 
 import qualified Data.Map.Strict as M ((!), assocs, empty, filterWithKey, fromList, fromListWith, keys, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, union)
@@ -182,17 +181,15 @@ data Gregator a b =
 
 
 fromKnownKeys :: (IsList ks, k ~ Item ks, Ord k, Ord k') => (k -> k') -> ks -> Gregator k k'
-fromKnownKeys aggregator' ks =
+fromKnownKeys aggregator ks =
   let
-    pairs = (id &&& aggregator') <$> L.toList ks
-    aggregatorMap = M.fromList pairs
-    disaggregatorMap = M.fromListWith (++) $ second return . swap <$> pairs
+    disaggregator =
+      (M.!)
+        $ M.fromListWith (++)
+        $ (aggregator &&& return)
+        <$> L.toList ks
   in
-    Gregator
-    {
-      aggregator = (M.!) aggregatorMap
-    , disaggregator = (M.!) disaggregatorMap
-    }
+    Gregator{..}
 
 
 aggregate :: Ord k' => Gregator k k' -> ([v] -> v') -> DataCube k v -> DataCube k' v'
