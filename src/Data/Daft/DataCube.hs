@@ -184,14 +184,9 @@ data Gregator a b =
 fromKnownKeys :: (IsList ks, k ~ Item ks, Ord k, Ord k') => (k -> k') -> ks -> Gregator k k'
 fromKnownKeys aggregator' ks =
   let
-    aggregatorMap =
-      M.fromList
-        $   (id &&& aggregator')
-        <$> L.toList ks
-    disaggregatorMap =
-      M.fromListWith (++)
-        $   second return . swap
-        <$> M.assocs aggregatorMap
+    pairs = (id &&& aggregator') <$> L.toList ks
+    aggregatorMap = M.fromList pairs
+    disaggregatorMap = M.fromListWith (++) $ second return . swap <$> pairs
   in
     Gregator
     {
