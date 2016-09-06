@@ -68,12 +68,12 @@ fieldMap' f (Field x) = Field (f x)
 -- Combine records.
 (<+>) :: Rec f as -> Rec f bs -> Rec f (as ++ bs)
 (<+>) = (V.<+>)
-infixl 0 <+>
+infixl 1 <+>
 
 -- Set a field's data in a record.
 (=:) :: KnownSymbol s => proxy '(s,a) -> a -> FieldRec '[ '(s,a) ]
 (=:) = (V.=:)
-infixl 1 =:
+infixl 2 =:
 
 
 -- Extract a field's data from a record.

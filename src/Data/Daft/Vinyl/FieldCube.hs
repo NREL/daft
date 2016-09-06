@@ -18,6 +18,7 @@ module Data.Daft.Vinyl.FieldCube (
 , σ
 , π
 , κ
+, δ
 , ω
 , ρ
 -- * Joins
@@ -48,7 +49,7 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
-import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, evaluate, fromKnownKeys, fromTable, join, knownKeys, projectWithKey, reify, selectWithKey, semijoin, toKnownTable, toTable)
+import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, disaggregateWithKey, evaluate, fromKnownKeys, fromTable, join, knownKeys, projectWithKey, reify, selectWithKey, semijoin, toKnownTable, toTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
@@ -95,6 +96,10 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 
 κ :: (ks ⊆ ks0, ks' ⊆ ks, Ord (FieldRec ks), Ord (FieldRec ks')) => Set (FieldRec ks0) -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
 κ = C.aggregateWithKey . C.fromKnownKeys rcast . S.map rcast
+
+
+δ :: (ks' ⊆ ks0, ks ⊆ ks', Ord (FieldRec ks), Ord (FieldRec ks')) => Set (FieldRec ks0) -> (FieldRec ks' -> FieldRec vs -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
+δ = C.disaggregateWithKey . C.fromKnownKeys rcast . S.map rcast
 
 
 ω :: (ks' ⊆ ks, Ord (FieldRec ks')) => FieldCube ks vs -> Set (FieldRec ks')

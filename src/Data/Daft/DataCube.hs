@@ -32,6 +32,8 @@ module Data.Daft.DataCube (
 , fromKnownKeys
 , aggregate
 , aggregateWithKey
+, disaggregate
+, disaggregateWithKey
 -- * Joins
 , join
 , semijoin
@@ -212,6 +214,23 @@ aggregateWithKey Gregator{..} reducer FunctionCube{..} =
       . reducer k'
       . mapMaybe function
       $ disaggregator k'
+
+
+disaggregate :: Ord k' => Gregator k' k -> (v -> v') -> DataCube k v -> DataCube k' v'
+disaggregate = (. const) . disaggregateWithKey
+
+
+disaggregateWithKey :: Ord k' => Gregator k' k -> (k' -> v -> v') -> DataCube k v -> DataCube k' v'
+disaggregateWithKey Gregator{..} expander TableCube{..} =
+  TableCube
+    . M.fromList
+    . concatMap (\(k, v) -> map (\k' -> (k', expander k' v)) $ disaggregator k)
+    $ M.assocs table
+disaggregateWithKey Gregator{..} expander FunctionCube{..} = 
+  FunctionCube $ \k' ->
+    fmap (expander k')
+      . function
+      $ aggregator k'
 
 
 data Joiner kLeft kRight k =
