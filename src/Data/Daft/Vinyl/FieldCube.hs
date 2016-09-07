@@ -79,12 +79,12 @@ toKnownRecords = C.toKnownTable runion
 (!) = (fromMaybe (error "FieldCube: key not found.") .) . C.evaluate
 
 
-σ :: (FieldRec ks -> FieldRec vs -> Bool) -> FieldCube ks vs -> FieldCube ks vs
-σ = C.selectWithKey
+σ :: (FieldRec (ks ++ vs) -> Bool) -> FieldCube ks vs -> FieldCube ks vs
+σ = C.selectWithKey . (. (<+>)) . (.)
 
 
-π :: (FieldRec ks -> FieldRec vs -> FieldRec ws) -> FieldCube ks vs -> FieldCube ks ws
-π = C.projectWithKey
+π :: (FieldRec (ks ++ vs) -> FieldRec ws) -> FieldCube ks vs -> FieldCube ks ws
+π = C.projectWithKey . (. (<+>)) . (.)
 
 
 ρ :: Ord (FieldRec ks) => Set (FieldRec ks) -> FieldCube ks vs -> FieldCube ks vs
