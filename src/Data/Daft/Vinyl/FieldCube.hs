@@ -49,7 +49,7 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
-import qualified Data.Daft.DataCube as C (Gregator, Joiner(Joiner), aggregateWithKey, antijoin, disaggregateWithKey, evaluate, fromKnownKeys, fromTable, join, knownKeys, projectWithKey, reify, selectWithKey, semijoin, toKnownTable, toTable)
+import qualified Data.Daft.DataCube as C (Gregator(..), Joiner(Joiner), aggregateWithKey, antijoin, disaggregateWithKey, evaluate, fromTable, join, knownKeys, projectWithKey, reify, selectWithKey, semijoin, toKnownTable, toTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
@@ -94,12 +94,24 @@ toKnownRecords = C.toKnownTable runion
 type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 
 
-κ :: (ks ⊆ ks0, ks' ⊆ ks, Ord (FieldRec ks), Ord (FieldRec ks')) => Set (FieldRec ks0) -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
-κ = C.aggregateWithKey . C.fromKnownKeys rcast . S.map rcast
+κ :: (ks0 ⊆ ks, ks ⊆ (ks' ++ ks0), ks' ⊆ ks, Ord (FieldRec ks), Ord (FieldRec ks')) => Set (FieldRec ks0) -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs' -- FIXME: Instead of subset, use sum.
+κ keys =
+  C.aggregateWithKey
+    C.Gregator
+    {
+      C.aggregator    = rcast
+    , C.disaggregator = flip map (S.toAscList keys) . (rcast .) . (<+>)
+    }
 
 
-δ :: (ks' ⊆ ks0, ks ⊆ ks', Ord (FieldRec ks), Ord (FieldRec ks')) => Set (FieldRec ks0) -> (FieldRec ks' -> FieldRec vs -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs'
-δ = C.disaggregateWithKey . C.fromKnownKeys rcast . S.map rcast
+δ :: (ks0 ⊆ ks', ks' ⊆ (ks ++ ks0), ks ⊆ ks', Ord (FieldRec ks), Ord (FieldRec ks')) => Set (FieldRec ks0) -> (FieldRec ks' -> FieldRec vs -> FieldRec vs') -> FieldCube ks vs -> FieldCube ks' vs' -- FIXME: Instead of subset, use sum.
+δ keys =
+  C.disaggregateWithKey
+    C.Gregator
+    {
+      C.aggregator    = rcast
+    , C.disaggregator = flip map (S.toAscList keys) . (rcast .) . (<+>)
+    }
 
 
 ω :: (ks' ⊆ ks, Ord (FieldRec ks')) => FieldCube ks vs -> Set (FieldRec ks')
