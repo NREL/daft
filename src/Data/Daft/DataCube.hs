@@ -15,6 +15,8 @@ module Data.Daft.DataCube (
 , toTable
 , toKnownTable
 , knownKeys
+, knownSize
+, knownEmpty
 , reify
 -- * Evaluation
 , evaluate
@@ -23,6 +25,9 @@ module Data.Daft.DataCube (
 , select
 , selectWithKey
 , selectKeys
+, selectRange
+, selectKnownMinimum
+, selectKnownMaximum
 -- * Projection
 , project
 , projectWithKey
@@ -49,7 +54,7 @@ import Data.Maybe (catMaybes, isJust, mapMaybe)
 import Data.Set (Set)
 import GHC.Exts (IsList(Item))
 
-import qualified Data.Map.Strict as M ((!), assocs, empty, filterWithKey, fromList, fromListWith, keys, keysSet, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, union)
+import qualified Data.Map.Strict as M ((!), assocs, empty, filterWithKey, findMin, findMax, fromList, fromListWith, keys, keysSet, lookup, mapKeysWith, mapWithKey, member, mergeWithKey, null, split, size, union)
 import qualified Data.Set as S (empty)
 import qualified GHC.Exts as L (IsList(..))
 
@@ -108,6 +113,17 @@ knownKeys TableCube{..}  = M.keysSet table
 knownKeys FunctionCube{} = S.empty
 
 
+knownSize :: DataCube k v -> Int
+knownSize TableCube{..}  = M.size table
+knownSize FunctionCube{} = 0
+
+
+knownEmpty :: DataCube k v -> Bool
+knownEmpty TableCube{..}  = M.null table
+knownEmpty FunctionCube{} = False
+
+
+
 reify :: (Ord k, IsList ks, k ~ Item ks) => ks -> DataCube k v -> DataCube k v
 reify ks cube =
   TableCube
@@ -146,8 +162,65 @@ selectWithKey selector FunctionCube{..} =
         $ selector k v
       return v
 
+
 selectKeys :: (k -> Bool) -> DataCube k v -> DataCube k v
 selectKeys = selectWithKey . (const .)
+
+
+selectRange :: Ord k => Maybe k -> Maybe k -> DataCube k v -> DataCube k v
+selectRange Nothing Nothing x = x
+selectRange (Just k0) Nothing TableCube{..} =
+  TableCube
+    . snd
+    $ M.split k0 table
+selectRange Nothing (Just k1) TableCube{..} =
+  TableCube
+    . fst
+    $ M.split k1 table
+selectRange (Just k0) (Just k1) TableCube{..} =
+  TableCube
+    . fst
+    . M.split k1
+    . snd
+    $ M.split k0 table
+selectRange (Just k0) Nothing FunctionCube{..} =
+  FunctionCube $ \k ->
+    do
+      guard
+        $ k0 < k
+      function k
+selectRange Nothing (Just k1) FunctionCube{..} =
+  FunctionCube $ \k ->
+    do
+      guard
+        $ k < k1
+      function k
+selectRange (Just k0) (Just k1) FunctionCube{..} =
+  FunctionCube $ \k ->
+    do
+      guard
+        $ k0 < k && k < k1
+      function k
+
+
+selectKnownMinimum :: Ord k => DataCube k v -> Maybe (k, v)
+selectKnownMinimum TableCube{..} =
+  do
+    guard . not
+      $ M.null table
+    return
+      $ M.findMin table
+selectKnownMinimum FunctionCube{..} = Nothing
+
+
+selectKnownMaximum :: Ord k => DataCube k v -> Maybe (k, v)
+selectKnownMaximum TableCube{..} =
+  do
+    guard . not
+      $ M.null table
+    return
+      $ M.findMax table
+selectKnownMaximum FunctionCube{..} = Nothing
 
 
 project :: (v -> v') -> DataCube k v -> DataCube k v'
