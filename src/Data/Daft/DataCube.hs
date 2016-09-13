@@ -15,6 +15,7 @@ module Data.Daft.DataCube (
 , toTable
 , toKnownTable
 , knownKeys
+, withKnown
 , knownSize
 , knownEmpty
 , reify
@@ -111,6 +112,10 @@ toKnownTable _        FunctionCube{} = L.fromList []
 knownKeys :: DataCube k v -> Set k
 knownKeys TableCube{..}  = M.keysSet table
 knownKeys FunctionCube{} = S.empty
+
+
+withKnown :: DataCube k v -> (Set k -> DataCube k v -> a) -> a
+withKnown cube f = f (knownKeys cube) cube
 
 
 knownSize :: DataCube k v -> Int

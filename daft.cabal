@@ -1,5 +1,5 @@
 name:                daft
-version:             0.4.15.0
+version:             0.4.16.0
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -13,8 +13,10 @@ library
                     Data.Daft.Source
                     Data.Daft.TypeLevel
                     Data.Daft.Vinyl.FieldCube
+                    Data.Daft.Vinyl.FieldCube.IO
                     Data.Daft.Vinyl.FieldCube.Example
                     Data.Daft.Vinyl.FieldRec
+                    Data.Daft.Vinyl.FieldRec.IO
                     Data.Daft.Vinyl.Rec
                     Data.Daft.Vinyl.TypeLevel
                     Data.Daft.Vinyl.TypeLevel.Test
