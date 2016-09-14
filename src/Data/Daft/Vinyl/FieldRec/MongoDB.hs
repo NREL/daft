@@ -21,7 +21,6 @@ import Control.Monad.Except (MonadIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Bson (Value)
 import Data.Bson.Generic (FromBSON(..), ToBSON(..))
-import Data.Maybe (mapMaybe)
 import Data.Daft.Vinyl.FieldRec.Bson ()
 import Data.Vinyl.Derived (FieldRec)
 import Database.MongoDB (Action, Collection, Cursor, Query, Select, (=:))
@@ -69,5 +68,5 @@ next :: (MonadIO m, MonadBaseControl IO m, FromBSON (FieldRec rs)) => Cursor -> 
 next = fmap (>>= fromBSON) . M.next
 
 
-rest :: (MonadIO m, MonadBaseControl IO m, FromBSON (FieldRec rs)) => Cursor -> Action m [FieldRec rs]
-rest = fmap (mapMaybe fromBSON) . M.rest
+rest :: (MonadIO m, MonadBaseControl IO m, FromBSON (FieldRec rs)) => Cursor -> Action m (Maybe [FieldRec rs])
+rest = fmap (mapM fromBSON) . M.rest

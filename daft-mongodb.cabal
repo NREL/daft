@@ -1,5 +1,5 @@
 name:                daft-mongodb
-version:             0.4.17.0
+version:             0.4.17.1
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -8,6 +8,7 @@ cabal-version:       >= 1.10
 library
   hs-source-dirs  : src
   exposed-modules : Data.Daft.Vinyl.FieldCube.Bson
+                    Data.Daft.Vinyl.FieldCube.MongoDB
                     Data.Daft.Vinyl.FieldRec.Bson
                     Data.Daft.Vinyl.FieldRec.MongoDB
   build-depends   : base >= 4 && < 5
