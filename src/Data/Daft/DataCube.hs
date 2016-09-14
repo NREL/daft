@@ -1,11 +1,11 @@
-{-# LANGUAGE RecordWildCards       #-}
-{-# LANGUAGE TupleSections         #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections   #-}
+{-# LANGUAGE TypeFamilies    #-}
 
 
 module Data.Daft.DataCube (
 -- * Types
-  DataCube
+  DataCube -- FIXME: Would it be better not to keep this as abstract?
 , Rekeyer(..)
 , Gregator(..)
 , Joiner(..)
@@ -49,6 +49,7 @@ module Data.Daft.DataCube (
 
 import Control.Applicative ((<|>), liftA2)
 import Control.Arrow ((&&&), (***))
+import Control.DeepSeq (NFData(..))
 import Control.Monad (guard)
 import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes, isJust, mapMaybe)
@@ -91,6 +92,10 @@ instance Ord k => Monoid (DataCube k v) where
   mappend (TableCube table1) (TableCube table2) = TableCube $ M.union table1 table2
   mappend cube1 cube2 = FunctionCube $ \k -> evaluate cube1 k <|> evaluate cube2 k
 
+instance (NFData k, NFData v) => NFData (DataCube k v) where
+  rnf TableCube{..}    = rnf table
+  rnf FunctionCube{..} = rnf function
+ 
 
 fromTable :: (IsList as, a ~ Item as, Ord k) => (a -> k) -> (a -> v) -> as -> DataCube k v
 fromTable keyer valuer = TableCube . M.fromList . fmap (keyer &&& valuer) . L.toList
