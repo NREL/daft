@@ -10,13 +10,19 @@ module Data.Daft.Vinyl.FieldCube.Example (
 ) where
 
 
+import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Daft.DataCube (fromFunction)
 import Data.Daft.Vinyl.FieldCube (type (↝), (⋈), (!), ρ)
 import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
 import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))
 import Data.List.Util.Listable (toTabbeds)
+import Data.Maybe (isJust)
 import Data.Set (Set, fromList)
 import Data.Vinyl.Derived (FieldRec, SField(..))
+
+import qualified Data.Aeson as A (encode)
+import qualified Data.Daft.Vinyl.FieldCube.Aeson as A (fromArray, toArray)
+import qualified Data.Daft.Vinyl.FieldCube.Bson as B (fromArray, toArray)
 
 
 -- Types for field names.
@@ -106,6 +112,25 @@ main =
     let
       y :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash]
       y = cities ⋈  x
+      y' = ρ interest y
     putStrLn ""
     putStrLn "Result of some joins with tables and functions:"
-    putStrLn . toTabbeds . showFieldCube $ ρ interest y
+    putStrLn . toTabbeds $ showFieldCube y'
+    putStrLn "Encoding as JSON:"
+    mapM_ (putStrLn . unpack . A.encode) $ A.toArray y'
+    let
+      y'' :: Maybe ('[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash])
+      y'' = A.fromArray $ A.toArray y' 
+    putStrLn ""
+    putStrLn "Correctly decoding JSON:"
+    print $ isJust y''
+    putStrLn ""
+    putStrLn "Encoding as BSON:"
+    mapM_ print $ B.toArray y'
+    let
+      y''' :: Maybe ('[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash])
+      y''' = B.fromArray $ B.toArray y' 
+    putStrLn ""
+    putStrLn "Correctly decoding BSON:"
+    print $ isJust y'''
+    putStrLn ""

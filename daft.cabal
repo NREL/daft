@@ -1,5 +1,5 @@
 name:                daft
-version:             0.4.16.2
+version:             0.4.16.3
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -28,6 +28,7 @@ library
                   , aeson
                   , bson
                   , bson-generic
+                  , bytestring
                   , containers
                   , data-default
                   , mtl
