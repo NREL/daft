@@ -1,5 +1,5 @@
 name:                daft
-version:             0.4.16.1
+version:             0.4.16.2
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -13,10 +13,12 @@ library
                     Data.Daft.Source
                     Data.Daft.TypeLevel
                     Data.Daft.Vinyl.FieldCube
+                    Data.Daft.Vinyl.FieldCube.Aeson
                     Data.Daft.Vinyl.FieldCube.Bson
                     Data.Daft.Vinyl.FieldCube.IO
                     Data.Daft.Vinyl.FieldCube.Example
                     Data.Daft.Vinyl.FieldRec
+                    Data.Daft.Vinyl.FieldRec.Aeson
                     Data.Daft.Vinyl.FieldRec.Bson
                     Data.Daft.Vinyl.FieldRec.IO
                     Data.Daft.Vinyl.Rec
@@ -33,6 +35,7 @@ library
                   , text
                   , tostring
                   , type-list
+                  , unordered-containers
                   , vinyl
   exposed         : True
   buildable       : True
