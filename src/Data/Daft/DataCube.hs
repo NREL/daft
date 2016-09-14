@@ -11,6 +11,7 @@ module Data.Daft.DataCube (
 , Joiner(..)
 -- * Conversion
 , fromTable
+, fromTableM
 , fromFunction
 , toTable
 , toKnownTable
@@ -50,7 +51,7 @@ module Data.Daft.DataCube (
 import Control.Applicative ((<|>), liftA2)
 import Control.Arrow ((&&&), (***))
 import Control.DeepSeq (NFData(..))
-import Control.Monad (guard)
+import Control.Monad (ap, guard)
 import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes, isJust, mapMaybe)
 import Data.Set (Set)
@@ -99,6 +100,13 @@ instance (NFData k, NFData v) => NFData (DataCube k v) where
 
 fromTable :: (IsList as, a ~ Item as, Ord k) => (a -> k) -> (a -> v) -> as -> DataCube k v
 fromTable keyer valuer = TableCube . M.fromList . fmap (keyer &&& valuer) . L.toList
+
+
+fromTableM :: (Monad m, IsList as, a ~ Item as, Ord k) => (a -> m k) -> (a -> m v) -> as -> m (DataCube k v)
+fromTableM keyer valuer =
+  fmap (TableCube . M.fromList)
+    . mapM (ap (liftA2 (,) . keyer) valuer)
+    . L.toList
 
 
 fromFunction :: (k -> Maybe v) -> DataCube k v

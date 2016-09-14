@@ -11,27 +11,21 @@ module Data.Daft.Vinyl.FieldCube.Aeson (
 
 
 import Data.Aeson.Types (FromJSON(..), Parser, ToJSON(..), Value, parseMaybe)
-import Data.Daft.DataCube (fromTable, toKnownTable)
-import Data.Daft.TypeLevel (Union)
+import Data.Daft.DataCube (fromTableM, toKnownTable)
 import Data.Daft.Vinyl.FieldCube (FieldCube)
 import Data.Daft.Vinyl.FieldRec.Aeson ()
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec)
-import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
 
 toArray :: (Ord (FieldRec ks), ToJSON (FieldRec (ks ++ vs))) => FieldCube ks vs -> [Value]
-toArray =
-  map toJSON
-    . toKnownTable (<+>)
+toArray = toKnownTable $ (toJSON .) . (<+>)
 
 
-fromArray :: forall ks vs . (Ord (FieldRec ks), FromJSON (FieldRec (Union ks vs)), ks ⊆ Union ks vs, vs ⊆ Union ks vs) => [Value] -> Maybe (FieldCube ks vs)
+fromArray :: forall ks vs . (Ord (FieldRec ks), FromJSON (FieldRec ks), FromJSON (FieldRec vs)) => [Value] -> Maybe (FieldCube ks vs)
 fromArray = parseMaybe parseArray
 
 
-parseArray :: forall ks vs . (Ord (FieldRec ks), FromJSON (FieldRec (Union ks vs)), ks ⊆ Union ks vs, vs ⊆ Union ks vs) => [Value] -> Parser (FieldCube ks vs)
-parseArray =
-  fmap (fromTable (rcast :: FieldRec (Union ks vs) -> FieldRec ks) (rcast :: FieldRec (Union ks vs) -> FieldRec vs))
-    . mapM parseJSON
+parseArray :: forall ks vs . (Ord (FieldRec ks), FromJSON (FieldRec ks), FromJSON (FieldRec vs)) => [Value] -> Parser (FieldCube ks vs)
+parseArray = fromTableM parseJSON parseJSON
