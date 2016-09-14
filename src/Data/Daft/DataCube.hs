@@ -133,7 +133,6 @@ knownEmpty TableCube{..}  = M.null table
 knownEmpty FunctionCube{} = False
 
 
-
 reify :: (Ord k, IsList ks, k ~ Item ks) => ks -> DataCube k v -> DataCube k v
 reify ks cube =
   TableCube
