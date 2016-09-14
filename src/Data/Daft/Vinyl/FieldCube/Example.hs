@@ -11,11 +11,12 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 
 import Data.Daft.DataCube (fromFunction)
-import Data.Daft.Vinyl.FieldCube (type (↝), (⋈), (!), fromRecords, toRecords)
-import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:), readFieldRecs, showFieldRecs)
+import Data.Daft.Vinyl.FieldCube (type (↝), (⋈), (!), ρ)
+import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
+import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))
 import Data.List.Util.Listable (toTabbeds)
+import Data.Set (Set, fromList)
 import Data.Vinyl.Derived (FieldRec, SField(..))
-import Data.Vinyl.Lens (rcast)
 
 
 -- Types for field names.
@@ -48,9 +49,9 @@ states =
       , ["\"NM\""    , "\"New Mexico\"" ]
       , ["\"CO\""    , "\"Colorado\""   ]
       ]
-    Right stateRecs = readFieldRecs statesRaw :: Either String [FieldRec '[StateUSPS, StateName]]
+    Right stateRecs = readFieldCube statesRaw :: Either String ('[StateUSPS] ↝ '[StateName])
   in
-    fromRecords stateRecs
+    stateRecs
 
 
 -- A hash function on state names.
@@ -76,15 +77,15 @@ cities =
       , ["\"CO\""    , "\"Golden\""       , "-105.2211"      , "39.7555"       ]
       , ["\"CO\""    , "\"Denver\""       , "-104.9903"      , "39.7392"       ]
       ]
-    Right cityRecs = readFieldRecs citiesRaw :: Either String [FieldRec '[StateUSPS, CityName, Longitude, Latitude]]
+    Right cityRecs = readFieldCube citiesRaw :: Either String ('[StateUSPS, CityName] ↝ '[Longitude, Latitude])
   in
-    fromRecords cityRecs
+    cityRecs
 
 
 -- Some areas of interest.
-interest :: [FieldRec '[StateUSPS, CityName]]
+interest :: Set (FieldRec '[StateUSPS, CityName])
 interest =
-  [
+  fromList [
     sStateUSPS =: "CA" <+> sCityName =: "Los Angeles"
   , sStateUSPS =: "CA" <+> sCityName =: "San Francisco"
   , sStateUSPS =: "CT" <+> sCityName =: "New Haven"
@@ -107,5 +108,4 @@ main =
       y = cities ⋈  x
     putStrLn ""
     putStrLn "Result of some joins with tables and functions:"
-    putStrLn . toTabbeds
-      $ showFieldRecs (rcast <$> toRecords interest y :: [FieldRec '[StateUSPS, StateName, StateHash, CityName, Longitude, Latitude]])
+    putStrLn . toTabbeds . showFieldCube $ ρ interest y
