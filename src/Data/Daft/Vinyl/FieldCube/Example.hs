@@ -6,7 +6,27 @@
 
 
 module Data.Daft.Vinyl.FieldCube.Example (
+-- * Entry point
   main
+-- * Field types
+, StateUSPS
+, StateName
+, CityName
+, StateHash
+, Longitude
+, Latitude
+-- * Field accessors
+, sStateUSPS
+, sStateName
+, sCityName
+, sStateHash
+, sLongitude
+, sLatitude
+-- * Field cubes
+, states
+, cities
+, hashedStates
+, hashedStatesCities
 ) where
 
 
@@ -98,29 +118,33 @@ interest =
   ]
 
 
+-- An example join.
+hashedStates :: '[StateUSPS] ↝ '[StateName, StateHash]
+hashedStates = states ⋈  hashStates
+
+
+-- Another example join.
+hashedStatesCities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash]
+hashedStatesCities = ρ interest $ cities ⋈  hashedStates
+
+
 -- Simple example of some joins of tables and functions.
 main :: IO ()
 main =
   do
     let
-      x :: '[StateUSPS] ↝ '[StateName, StateHash]
-      x = states ⋈  hashStates
     putStrLn ""
     putStrLn "Example of evaluation:"
-    print $ x ! (sStateUSPS =: "CA")
-    let
-      y :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash]
-      y = cities ⋈  x
-      y' = ρ interest y
+    print $ hashedStates ! (sStateUSPS =: "CA")
     putStrLn ""
     putStrLn "Result of some joins with tables and functions:"
-    putStrLn . toTabbeds $ showFieldCube y'
+    putStrLn . toTabbeds $ showFieldCube hashedStatesCities
     putStrLn "Encoding as JSON:"
-    mapM_ (putStrLn . unpack . A.encode) $ A.toArray y'
+    mapM_ (putStrLn . unpack . A.encode) $ A.toArray hashedStatesCities
     let
-      y'' :: Maybe ('[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash])
-      y'' = A.fromArray $ A.toArray y' 
+      hashedStatesCities' :: Maybe ('[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash])
+      hashedStatesCities' = A.fromArray $ A.toArray hashedStatesCities 
     putStrLn ""
     putStrLn "Correctly decoding JSON:"
-    print $ isJust y''
+    print $ isJust hashedStatesCities'
     putStrLn ""
