@@ -8,20 +8,21 @@ module Data.Daft.Vinyl.FieldCube.MongoDB (
 , insertAll
 , insertAll_
 , select
-, selectId
+, selectKey
 , rest
 ) where
 
 
 import Control.Monad.Except (MonadIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
-import Data.Bson (Value)
+import Data.Bson (Field(..), Value)
 import Data.Bson.Generic (FromBSON(..), ToBSON(..))
 import Data.Daft.Vinyl.FieldCube (FieldCube)
 import Data.Daft.Vinyl.FieldCube.Bson (keysAsIds, idsAsKeys)
 import Data.Daft.Vinyl.FieldRec.Bson ()
+import Data.Text (append)
 import Data.Vinyl.Derived (FieldRec)
-import Database.MongoDB (Action, Collection, Cursor, Select, (=:))
+import Database.MongoDB (Action, Collection, Cursor, Select)
 
 import qualified Database.MongoDB.Query as M
 
@@ -46,8 +47,12 @@ select :: (ToBSON (FieldRec rs), Select aQueryOrSelection) => FieldRec rs -> Col
 select = M.select . toBSON
 
 
-selectId :: Select aQueryOrSelection => Value -> Collection -> aQueryOrSelection
-selectId = M.select . (: []) . ("_id" =:)
+selectKey :: (Select aQueryOrSelection, ToBSON (FieldRec rs)) => FieldRec rs -> Collection -> aQueryOrSelection
+selectKey = M.select . fmap prependId . toBSON
+
+
+prependId :: Field -> Field
+prependId (k := v) = "_id." `append` k := v
 
 
 rest :: (MonadIO m, MonadBaseControl IO m, Ord (FieldRec ks), FromBSON (FieldRec ks), FromBSON (FieldRec vs)) => Cursor -> Action m (Maybe (FieldCube ks vs))
