@@ -14,12 +14,12 @@ import Data.Bson (Field((:=)), Value(Doc, Float))
 import Data.Daft.Vinyl.FieldCube (type (↝))
 import Data.Daft.Vinyl.FieldCube.Example hiding (main)
 import Data.Daft.Vinyl.FieldCube.IO (showFieldCube)
-import Data.Daft.Vinyl.FieldCube.MongoDB (insertAll, select, selectKey, rest)
+import Data.Daft.Vinyl.FieldCube.MongoDB (insertAll, saveAll, select, selectKey, rest)
 import Data.Daft.Vinyl.FieldRec ((=:), (<+>))
 import Data.Daft.Vinyl.FieldRec.MongoDB (findOne)
 import Data.List.Util.Listable (toTabbeds)
 import Data.Vinyl.Derived (FieldRec)
-import Database.MongoDB (access, close, connect, dropDatabase, find, host, master)
+import Database.MongoDB (access, close, connect, dropCollection, find, host, master)
 
 import qualified Database.MongoDB as M (select)
 
@@ -31,9 +31,10 @@ main =
     void
       $ access pipe master "daft-mongodb"
       $ do
-        void $ dropDatabase "daft-mongodb"
-        x <-   insertAll "states"               states
-        void $ insertAll "cities"               cities
+        saveAll "cities"               cities
+        void $ dropCollection "states"
+        void $ dropCollection "hashed-states-cities"
+        x <-   insertAll "states" states
         void $ insertAll "hashed-states-cities" hashedStatesCities
         liftIO $ putStrLn ""
         liftIO $ putStrLn "Keys for states:"

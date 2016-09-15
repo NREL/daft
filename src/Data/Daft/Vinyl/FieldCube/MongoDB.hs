@@ -7,6 +7,7 @@ module Data.Daft.Vinyl.FieldCube.MongoDB (
 , insertMany_
 , insertAll
 , insertAll_
+, saveAll
 , select
 , selectKey
 , rest
@@ -41,6 +42,10 @@ insertAll = (. keysAsIds) . M.insertAll
 
 insertAll_ :: (MonadIO m, Ord (FieldRec ks), ToBSON (FieldRec ks), ToBSON (FieldRec vs)) => Collection -> FieldCube ks vs -> Action m ()
 insertAll_ = (. keysAsIds) . M.insertAll_
+
+
+saveAll :: (MonadIO m, Ord (FieldRec ks), ToBSON (FieldRec ks), ToBSON (FieldRec vs)) => Collection -> FieldCube ks vs -> Action m ()
+saveAll collection =  mapM_ (M.save collection) . keysAsIds
 
 
 select :: (ToBSON (FieldRec rs), Select aQueryOrSelection) => FieldRec rs -> Collection -> aQueryOrSelection

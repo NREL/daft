@@ -9,6 +9,7 @@ module Data.Daft.Vinyl.FieldRec.MongoDB (
 , insertMany_
 , insertAll
 , insertAll_
+, save
 , select
 , selectId
 , findOne
@@ -50,6 +51,10 @@ insertAll = (. fmap toBSON) . M.insertAll
 
 insertAll_ :: (MonadIO m, ToBSON (FieldRec rs)) => Collection -> [FieldRec rs] -> Action m ()
 insertAll_ = (. fmap toBSON) . M.insertAll_
+
+
+save :: (MonadIO m, ToBSON (FieldRec rs)) => Collection -> FieldRec rs -> Action m ()
+save = (. toBSON) . M.save
 
 
 select :: (ToBSON (FieldRec rs), Select aQueryOrSelection) => FieldRec rs -> Collection -> aQueryOrSelection
