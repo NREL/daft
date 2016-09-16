@@ -1,0 +1,42 @@
+name:                daft-postgresql
+version:             0.4.17.0
+license:             AllRightsReserved
+category:            Data
+build-type:          Simple
+cabal-version:       >= 1.10
+
+library
+  hs-source-dirs  : src
+  exposed-modules : Data.Daft.Vinyl.FieldRec.Hasql
+  build-depends   : base >= 4 && < 5
+                  , bytestring
+                  , contravariant
+                  , daft
+                  , data-default
+                  , hasql
+                  , semigroups
+                  , text
+                  , vinyl
+  exposed         : True
+  buildable       : True
+  default-language: Haskell2010
+  ghc-options     : -O2 -Wall
+
+test-suite serializing
+  type            : exitcode-stdio-1.0
+  hs-source-dirs  : src
+  main-is         : Test.hs
+  build-depends   : base >= 4 && < 5
+                  , bytestring
+                  , contravariant
+                  , daft
+                  , data-default
+                  , hasql
+                  , mtl
+                  , raft
+                  , semigroups
+                  , text
+                  , vinyl
+  buildable       : True
+  default-language: Haskell2010
+  ghc-options     : -O2 -Wall
