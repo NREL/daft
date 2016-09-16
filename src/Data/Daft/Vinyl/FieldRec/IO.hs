@@ -17,7 +17,7 @@ module Data.Daft.Vinyl.FieldRec.IO (
 , showFieldRecs
 , writeFieldRecFile
 , writeFieldRecSource
-, InternalDefault
+, InternalDefault(..)
 , InternalReadFieldRec
 , InternalShowFieldRec
 ) where
