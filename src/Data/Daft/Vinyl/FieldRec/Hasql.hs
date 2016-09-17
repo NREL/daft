@@ -13,6 +13,7 @@ module Data.Daft.Vinyl.FieldRec.Hasql (
   Paramsable(..)
 , Rowable(..)
 , selectList
+, insertRow
 -- Internal type classes
 , ParamsableWithProxy
 ) where
@@ -32,7 +33,7 @@ import Hasql.Query (Query, statement)
 
 import qualified Data.ByteString.Char8 as B (pack)
 import qualified Data.Text as T (pack, unpack)
-import qualified Hasql.Decoders as D (Row, Value, int8, rowsList, text, value)
+import qualified Hasql.Decoders as D (Row, Value, int8, rowsAffected, rowsList, text, value)
 import qualified Hasql.Encoders as E (Params, Value, int8, text, unit, value)
 
 
@@ -77,10 +78,9 @@ instance Default (D.Value String) where
   def = T.unpack <$> D.text
 
 
-selectList :: forall ps rs . (ParamsableWithProxy (FieldRec ps) (FieldRec ps), Rowable (FieldRec rs), Labeled (FieldRec ps), Labeled (FieldRec rs)) => String -> Query (FieldRec ps) [FieldRec rs]
+selectList :: forall ps rs . (Paramsable (FieldRec ps), Rowable (FieldRec rs), Labeled (FieldRec ps), Labeled (FieldRec rs)) => String -> Query (FieldRec ps) [FieldRec rs]
 selectList table =
   let
-    quote = ("\"" ++) . (++ "\"")
     inLabels  = labels (Proxy :: Proxy (FieldRec ps))
     outLabels = labels (Proxy :: Proxy (FieldRec rs))
     sql = -- FIXME: This needs to escape special SQL characters.
@@ -93,9 +93,31 @@ selectList table =
                then ""
                else (" where " ++)
                       . intercalate " and "
-                      $ zipWith ((. (("=$" ++) . show)) . (++)) (quote <$> inLabels) [(1 :: Int)..]
+                      $ zipWith ((. ((" = $" ++) . show)) . (++)) (quote <$> inLabels) [(1 :: Int)..]
            )
     encoder = params
     decoder = D.rowsList row
   in 
     statement (B.pack sql) encoder decoder True
+
+
+insertRow :: forall ps . (Paramsable (FieldRec ps), Labeled (FieldRec ps)) => String -> Query (FieldRec ps) Int
+insertRow table =
+  let
+    inLabels  = labels (Proxy :: Proxy (FieldRec ps))
+    sql =
+      "insert into "
+        ++ table
+        ++ " ("
+        ++ intercalate ", " (quote <$> inLabels)
+        ++ ") values("
+        ++ intercalate ", " (zipWith (const $ ("$" ++) . show) inLabels [(1 :: Int)..])
+        ++ ")"
+    encoder = params
+    decoder = fromEnum <$> D.rowsAffected
+  in
+    statement (B.pack sql) encoder decoder True
+
+
+quote :: String -> String
+quote = ("\"" ++) . (++ "\"")
