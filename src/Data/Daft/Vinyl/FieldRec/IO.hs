@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
 
@@ -26,19 +27,17 @@ import Control.Monad (liftM2)
 import Control.Monad.Except (MonadError, MonadIO, throwError)
 import Control.Monad.Except.Util (tryIO)
 import Data.Daft.Source (DataSource(..))
-import Data.Daft.Vinyl.FieldRec (InternalLabeled, labels)
-import Data.Daft.Vinyl.FieldRec.Instances ()
-import Data.Default (Default(..))
+import Data.Daft.Vinyl.FieldRec (Labeled(..))
 import Data.List (nub)
 import Data.List.Util (elemPermutation)
 import Data.List.Util.Listable (fromTabbeds, toTabbeds)
 import Data.Maybe (fromJust, isNothing)
+import Data.Proxy (Proxy(..))
 import Data.String (IsString(..))
 import Data.String.ToString (ToString(..))
 import Data.String.Util (readExcept)
 import Data.Vinyl.Core (Rec(..))
 import Data.Vinyl.Derived (ElField(..), FieldRec, )
-import Data.Vinyl.TypeLevel (RecAll)
 import GHC.TypeLits (KnownSymbol, Symbol)
 
 
@@ -57,22 +56,21 @@ instance (KnownSymbol s, Read t, InternalReadFieldRec (rs :: [(Symbol, *)])) => 
 
 
 -- Read a record by matching a header to the type signature.
-readFieldRecCheckingLabels :: (Eq s, IsString s, ToString s, IsString e, MonadError e m, Default (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => [s] -> [s] -> m (FieldRec fields)
+readFieldRecCheckingLabels :: (Eq s, IsString s, ToString s, IsString e, MonadError e m, Labeled (FieldRec fields), InternalReadFieldRec fields) => [s] -> [s] -> m (FieldRec fields)
 readFieldRecCheckingLabels headerRow dataRow = head <$> readFieldRecs (headerRow : [dataRow])
 
 
 -- Read records by matching a header to the type signature.
-readFieldRecs :: (Eq s, IsString s, ToString s, IsString e, MonadError e m, Default (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => [[s]] -> m [FieldRec fields]
+readFieldRecs :: forall s e m fields . (Eq s, IsString s, ToString s, IsString e, MonadError e m, Labeled (FieldRec fields), InternalReadFieldRec fields) => [[s]] -> m [FieldRec fields]
 readFieldRecs [] = throwError "a header must be specified"
 readFieldRecs (headerRow : dataRows)
   | isNothing permutation       = throwError "header names do not match field names"
   | n /= length signature       = throwError "header and field names differ in length"
   | n /= length (nub headerRow) = throwError "header contains duplicate names"
-  | otherwise                   = if True then mapM (readFieldRec =<<) dataRows' else return [u]
+  | otherwise                   = mapM (readFieldRec =<<) dataRows'
     where 
       n = length headerRow
-      u = def
-      signature = labels u
+      signature = labels (Proxy :: Proxy (FieldRec fields))
       permutation = elemPermutation headerRow signature
       permuteRow dataRow
         | n /= length dataRow = throwError . fromString $ "incorrect number of data items in " ++ show (map toString dataRow)
@@ -92,38 +90,36 @@ instance (KnownSymbol s, Show t, InternalShowFieldRec (rs :: [(Symbol, *)])) => 
 
 
 -- Show records with a header from the type signature.
-showFieldRecs :: (Default (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => [FieldRec fields] -> [[String]]
+showFieldRecs :: forall fields . (Labeled (FieldRec fields), InternalShowFieldRec fields) => [FieldRec fields] -> [[String]]
 showFieldRecs dataRows =
   (signature :)
-    . tail
     $ showFieldRec
-    <$> (u : dataRows)
+    <$> dataRows
     where
-      u = def
-      signature = labels u
+      signature = labels (Proxy :: Proxy (FieldRec fields))
 
 
-readFieldRecFile :: (IsString e, MonadError e m, MonadIO m, Default (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => FilePath -> m [FieldRec fields]
+readFieldRecFile :: (IsString e, MonadError e m, MonadIO m, Labeled (FieldRec fields), InternalReadFieldRec fields) => FilePath -> m [FieldRec fields]
 readFieldRecFile =
   ((readFieldRecs . fromTabbeds) =<<)
     . tryIO . readFile
 
 
-readFieldRecSource :: (IsString e, MonadError e m, MonadIO m, Default (FieldRec fields), RecAll ElField fields InternalLabeled, InternalReadFieldRec fields) => DataSource a -> m [FieldRec fields]
+readFieldRecSource :: (IsString e, MonadError e m, MonadIO m, Labeled (FieldRec fields), InternalReadFieldRec fields) => DataSource a -> m [FieldRec fields]
 readFieldRecSource FileData{..}    = readFieldRecFile filePath
 readFieldRecSource TextData{..}    = readFieldRecs $ fromTabbeds parsableText
 readFieldRecSource BuiltinData{..} = throwError "Cannot read records from built-in data source."
 readFieldRecSource NoData          = return []
 
 
-writeFieldRecFile :: (IsString e, MonadError e m, MonadIO m, Default (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => FilePath -> [FieldRec fields] -> m ()
+writeFieldRecFile :: (IsString e, MonadError e m, MonadIO m, Labeled (FieldRec fields), InternalShowFieldRec fields) => FilePath -> [FieldRec fields] -> m ()
 writeFieldRecFile =
   (tryIO .)
     . (. (toTabbeds . showFieldRecs))
     . writeFile
 
 
-writeFieldRecSource :: (IsString e, MonadError e m, MonadIO m, Default (FieldRec fields), RecAll ElField fields InternalLabeled, InternalShowFieldRec fields) => DataSource a -> [FieldRec fields] -> m (Maybe String)
+writeFieldRecSource :: (IsString e, MonadError e m, MonadIO m, Labeled (FieldRec fields), InternalShowFieldRec fields) => DataSource a -> [FieldRec fields] -> m (Maybe String)
 writeFieldRecSource FileData{..} =
   (>> return Nothing)
     . writeFieldRecFile filePath

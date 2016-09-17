@@ -15,7 +15,7 @@ module Data.Daft.Vinyl.FieldRec (
 , labels
 , join
 -- * Internals
-, InternalLabeled
+, Labeled
 ) where
 
 
@@ -25,11 +25,10 @@ import Data.Daft.Vinyl.TypeLevel (RJoin(rjoin), RUnion)
 import Data.Maybe (catMaybes)
 import Data.Proxy (Proxy(Proxy))
 import Data.String (IsString(..))
-import Data.Vinyl.Core (Dict(..), Rec(..), recordToList, reifyConstraint, rmap)
+import Data.Vinyl.Core (Rec(..))
 import Data.Vinyl.Derived (ElField(..), FieldRec, )
-import Data.Vinyl.Functor (Compose(Compose), Const(Const))
 import Data.Vinyl.Lens (type (∈), type (⊆), rget)
-import Data.Vinyl.TypeLevel (RecAll, type (++))
+import Data.Vinyl.TypeLevel (type (++))
 import GHC.TypeLits (KnownSymbol, symbolVal)
 
 import qualified Data.Vinyl.Core as V ((<+>))
@@ -59,19 +58,14 @@ infixl 9 <:
 
 
 -- Extract the labels from a record.
-labels :: (IsString s, RecAll ElField fields InternalLabeled) => FieldRec fields -> [s]
-labels =
-  recordToList
-    . rmap (\(Compose (Dict x)) -> Const . fromString $ label x)
-    . reifyConstraint (Proxy :: Proxy InternalLabeled)
+class Labeled a where
+  labels :: IsString s => proxy a -> [s]
 
+instance Labeled (FieldRec '[]) where
+  labels _ = []
 
--- Internal class for extracting labels from fields.
-class InternalLabeled a where
-  label :: a -> String
-
-instance KnownSymbol s => InternalLabeled (ElField '(s, t)) where
-  label _ = symbolVal (Proxy :: Proxy s)
+instance (KnownSymbol s, Labeled (FieldRec rs)) => Labeled (FieldRec ('(s, t) ': rs)) where
+  labels _ = fromString (symbolVal (Proxy :: Proxy s)) : labels (Proxy :: Proxy (FieldRec rs))
 
 
 join :: forall as bs cs
