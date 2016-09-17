@@ -41,7 +41,7 @@ import Data.Vinyl.Derived (ElField(..), FieldRec, )
 import GHC.TypeLits (KnownSymbol, Symbol)
 
 
---  Auxilliary class for reading a record.
+--  class for reading a record.
 class ReadFieldRec (rs :: [(Symbol, *)]) where
   readFieldRec :: (ToString s, IsString e, MonadError e m) => [s] -> m (FieldRec rs)
 
