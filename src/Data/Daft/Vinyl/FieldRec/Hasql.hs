@@ -10,30 +10,30 @@
 
 
 module Data.Daft.Vinyl.FieldRec.Hasql (
-  params
-, row
+  Paramsable(..)
+, Rowable(..)
 , selectList
+-- Internal type classes
+, ParamsableWithProxy
 ) where
 
 
-import Data.ByteString.Char8 (pack)
-import Data.Daft.Vinyl.FieldRec ((<:), labels, InternalLabeled)
-import Data.Daft.Vinyl.FieldRec.IO (InternalDefault(..))
+import Data.Daft.Vinyl.FieldRec (Labeled(..), (<:))
 import Data.Default (Default(..))
 import Data.Functor.Contravariant (contramap)
 import Data.List (intercalate)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup ((<>))
-import Data.Text (pack, unpack)
 import Data.Vinyl.Core (Rec(..), rappend)
 import Data.Vinyl.Derived (ElField(..), FieldRec)
 import Data.Vinyl.Lens (type (∈))
-import Data.Vinyl.TypeLevel (RecAll)
 import GHC.TypeLits (KnownSymbol)
+import Hasql.Query (Query, statement)
 
-import qualified Hasql.Decoders as D
-import qualified Hasql.Encoders as E
-import qualified Hasql.Query as Q
+import qualified Data.ByteString.Char8 as B (pack)
+import qualified Data.Text as T (pack, unpack)
+import qualified Hasql.Decoders as D (Row, Value, rowsList, text, value)
+import qualified Hasql.Encoders as E (Params, Value, text, unit, value)
 
 
 class Paramsable a where
@@ -54,7 +54,7 @@ instance (Default (E.Value t), '(s, t) ∈ rs, ParamsableWithProxy (FieldRec rs'
 
 
 instance Default (E.Value String) where
-  def = contramap Data.Text.pack E.text
+  def = contramap T.pack E.text
 
 
 class Rowable a where
@@ -68,18 +68,18 @@ instance (Default (D.Value t), KnownSymbol s, Rowable (FieldRec rs)) => Rowable 
 
 
 instance Default (D.Value String) where
-  def = unpack <$> D.text
+  def = T.unpack <$> D.text
 
 
-selectList :: forall ps rs . (ParamsableWithProxy (FieldRec ps) (FieldRec ps), Rowable (FieldRec rs), RecAll ElField ps InternalLabeled, RecAll ElField rs InternalLabeled, InternalDefault (FieldRec ps), InternalDefault (FieldRec rs)) => String -> Q.Query (FieldRec ps) [FieldRec rs]
+selectList :: forall ps rs . (ParamsableWithProxy (FieldRec ps) (FieldRec ps), Rowable (FieldRec rs), Labeled (FieldRec ps), Labeled (FieldRec rs)) => String -> Query (FieldRec ps) [FieldRec rs]
 selectList table =
   let
-    quote x = "\"" ++ x ++ "\""
-    inLabels = labels (def' :: FieldRec ps)
-    outLabels = labels (def' :: FieldRec rs)
+    quote = ("\"" ++) . (++ "\"")
+    inLabels  = labels (Proxy :: Proxy (FieldRec ps))
+    outLabels = labels (Proxy :: Proxy (FieldRec rs))
     sql = -- FIXME: This needs to escape special SQL characters.
       "select "
-        ++ intercalate "," (quote <$> outLabels)
+        ++ intercalate ", " (quote <$> outLabels)
         ++ " from "
         ++ table
         ++ (
@@ -87,9 +87,9 @@ selectList table =
                then ""
                else (" where " ++)
                       . intercalate " and "
-                      $ zipWith (\l n -> l ++ "=$" ++ show n) (quote <$> inLabels) [(1 :: Int)..]
+                      $ zipWith ((. (("=$" ++) . show)) . (++)) (quote <$> inLabels) [(1 :: Int)..]
            )
     encoder = params
     decoder = D.rowsList row
   in 
-    Q.statement (Data.ByteString.Char8.pack sql) encoder decoder True
+    statement (B.pack sql) encoder decoder True

@@ -17,24 +17,24 @@ import Data.Daft.Vinyl.FieldRec.Hasql (selectList)
 import Data.Daft.Vinyl.FieldRec.IO (showFieldRecs)
 import Data.List.Util.Listable (toTabbeds)
 import Data.Vinyl.Derived (FieldRec)
+import Hasql.Connection (acquire, release, settings)
+import Hasql.Session (Session, query, run)
 import System.Environment (getArgs)
 
-import qualified Hasql.Connection as C
-import qualified Hasql.Session as S
 
 
 main :: IO ()
 main =
   do
-    [username, password, database] <- getArgs
-    Right connection <- C.acquire $ C.settings "localhost" 5432 (pack username) (pack password) (pack database)
-    Right positions <- S.run (queryPositions "CA") connection
-    C.release connection
+    [username, password, database] <- fmap pack <$> getArgs
+    Right connection <- acquire $ settings "localhost" 5432 username password database
+    Right positions <- run (queryPositions "CA") connection
+    release connection
     putStrLn ""
     putStrLn . toTabbeds . showFieldRecs $ positions
 
 
-queryPositions :: String -> S.Session [FieldRec '[StateUSPS, Longitude, Latitude]]
+queryPositions :: String -> Session [FieldRec '[StateUSPS, Longitude, Latitude]]
 queryPositions state =
-  S.query (sStateUSPS =: state)
+  query (sStateUSPS =: state)
     $ selectList "test"
