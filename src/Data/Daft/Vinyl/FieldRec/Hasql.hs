@@ -32,8 +32,8 @@ import Hasql.Query (Query, statement)
 
 import qualified Data.ByteString.Char8 as B (pack)
 import qualified Data.Text as T (pack, unpack)
-import qualified Hasql.Decoders as D (Row, Value, rowsList, text, value)
-import qualified Hasql.Encoders as E (Params, Value, text, unit, value)
+import qualified Hasql.Decoders as D (Row, Value, int8, rowsList, text, value)
+import qualified Hasql.Encoders as E (Params, Value, int8, text, unit, value)
 
 
 class Paramsable a where
@@ -53,6 +53,9 @@ instance (Default (E.Value t), '(s, t) ∈ rs, ParamsableWithProxy (FieldRec rs'
   paramsWithProxy _ = contramap ((Proxy :: Proxy '(s, t)) <:) (E.value def) <> paramsWithProxy (Proxy :: Proxy (FieldRec rs'))
 
 
+instance Default (E.Value Int) where
+  def = contramap toEnum E.int8
+
 instance Default (E.Value String) where
   def = contramap T.pack E.text
 
@@ -66,6 +69,9 @@ instance Rowable (FieldRec '[]) where
 instance (Default (D.Value t), KnownSymbol s, Rowable (FieldRec rs)) => Rowable (FieldRec ('(s, t) ': rs)) where
   row = rappend <$> (D.value $ (:& RNil) . Field <$> def) <*> row
 
+
+instance Default (D.Value Int) where
+  def = fromEnum <$> D.int8
 
 instance Default (D.Value String) where
   def = T.unpack <$> D.text
