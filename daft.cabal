@@ -1,5 +1,5 @@
 name:                daft
-version:             0.4.17.7
+version:             0.4.18.0
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -7,7 +7,9 @@ cabal-version:       >= 1.10
 
 library
   hs-source-dirs  : src
-  exposed-modules : Data.Daft.DataCube
+  exposed-modules : Data.Daft.Cache
+                    Data.Daft.Cache.Memory
+                    Data.Daft.DataCube
                     Data.Daft.Keyed
                     Data.Daft.Lookup
                     Data.Daft.Source
@@ -30,6 +32,7 @@ library
                   , containers
                   , data-default
                   , deepseq
+                  , hashable
                   , mtl
                   , raft
                   , text
