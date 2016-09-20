@@ -17,7 +17,7 @@ module Data.Daft.Cache.Memory (
 
 
 import Control.Applicative ((<|>))
-import Control.Monad (unless)
+import Control.Monad (guard, unless)
 import Control.Monad.Except (MonadError(..), MonadIO)
 import Control.Monad.State (MonadState(..), StateT, runStateT, modify')
 import Data.Daft.Cache (Cache(..), maximum', minimum')
@@ -119,16 +119,22 @@ instance (Eq o, Hashable o, Ord k, MonadError String m) => Cache o k v (MemoryCa
   lookupRange f object lower upper =
     do
       container <- get
+      let
+        putNew =
+          do
+            values <- f object lower upper
+            put
+              $ H.insert object
+                (
+                  lower <|> (guard (not $ null values) >> (Just . minimum $ fst <$> values))
+                , upper <|> (guard (not $ null values) >> (Just . maximum $ fst <$> values))
+                , M.fromList values
+                ) container
+            return values
       case H.lookup object container of
-        Nothing                      -> do
-                                          values <- f object lower upper
-                                          put $ H.insert object (lower, upper, M.fromList values) container
-                                          return values
+        Nothing                      -> putNew
         Just (lower', upper', inner) -> if isNothing lower' || isNothing upper'
-                                          then do
-                                                 values <- f object lower upper
-                                                 put $ H.insert object (lower, upper, M.fromList values) container
-                                                 return values
+                                          then putNew
                                           else do
                                                  let
                                                    (lower'', upper'') = (minimum' lower lower', maximum' upper upper')
