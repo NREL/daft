@@ -1,17 +1,22 @@
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE StandaloneDeriving         #-}
 
 
 module Data.Daft.Cache.Memory (
   Container
+, emptyContainer
 , MemoryCacheT(..)
-, execMemoryCache
+, runCacheT
+, evalCacheT
+, execCacheT
 ) where
 
 
 import Control.Arrow ((&&&))
-import Control.Monad.Except (ExceptT, MonadError(..), MonadIO, runExceptT)
+import Control.Monad.Except (MonadError(..), MonadIO)
 import Control.Monad.State (MonadState(..), StateT, runStateT, modify')
 import Data.Daft.Cache (Cache(..), maximum', minimum')
 import Data.Hashable (Hashable)
@@ -20,20 +25,31 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.Map.Strict as M
 
 
-execMemoryCache :: Monad m => MemoryCacheT o k v m a -> Container o k v -> m (Either String (Container o k v))
-execMemoryCache cache initial =
-  do
-    (x, cache') <- runStateT (runExceptT (runCacheT cache)) initial
-    return $ const cache' <$> x
-
-
 type Container o k v = H.HashMap o (M.Map k v)
 
 
-newtype MemoryCacheT o k v m a = MemoryCacheM {runCacheT :: ExceptT String (StateT (Container o k v) m) a}
-  deriving (Applicative, Functor, Monad, MonadError String, MonadIO, MonadState (Container o k v))
+emptyContainer :: (Eq o, Hashable o) => [o] -> Container o k v
+emptyContainer = ($ repeat M.empty) . (H.fromList .) . zip
 
-instance (Eq o, Hashable o, Ord k, Monad m) => Cache o k v (MemoryCacheT o k v m) where
+
+runCacheT :: MemoryCacheT o k v m a -> Container o k v -> m (a, Container o k v)
+runCacheT = runStateT . runMemoryCacheT
+
+
+evalCacheT :: Monad m => MemoryCacheT o k v m a -> Container o k v -> m a
+evalCacheT = (fmap fst .) . runCacheT
+
+
+execCacheT :: Monad m => MemoryCacheT o k v m a ->  Container o k v -> m (Container o k v)
+execCacheT = (fmap snd .) . runCacheT
+
+
+newtype MemoryCacheT o k v m a = MemoryCacheT {runMemoryCacheT :: StateT (Container o k v) m a}
+  deriving (Applicative, Functor, Monad, MonadIO, MonadState (Container o k v))
+
+deriving instance MonadError String m => MonadError String (MemoryCacheT o k v m)
+
+instance (Eq o, Hashable o, Ord k, MonadError String m) => Cache o k v (MemoryCacheT o k v m) where
 
   emptyCache = put H.empty
 
