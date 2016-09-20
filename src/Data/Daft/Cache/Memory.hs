@@ -21,6 +21,7 @@ import Control.Monad.Except (MonadError(..), MonadIO)
 import Control.Monad.State (MonadState(..), StateT, runStateT, modify')
 import Data.Daft.Cache (Cache(..), maximum', minimum')
 import Data.Hashable (Hashable)
+import Data.Maybe (isNothing)
 
 import qualified Data.HashMap.Strict as H
 import qualified Data.Map.Strict as M
@@ -122,7 +123,7 @@ instance (Eq o, Hashable o, Ord k, MonadError String m) => Cache o k v (MemoryCa
                                           values <- f object lower upper
                                           put $ H.insert object (lower, upper, M.fromList values) container
                                           return values
-        Just (lower', upper', inner) -> if M.null inner
+        Just (lower', upper', inner) -> if isNothing lower' || isNothing upper'
                                           then do
                                                  values <- f object lower upper
                                                  put $ H.insert object (lower, upper, M.fromList values) container
@@ -131,17 +132,17 @@ instance (Eq o, Hashable o, Ord k, MonadError String m) => Cache o k v (MemoryCa
                                                  let
                                                    (lower'', upper'') = (minimum' lower lower', maximum' upper upper')
                                                  innerLower <-
-                                                   if lower' == lower''
-                                                     then return []
-                                                     else f object lower'' lower'
+                                                   if isNothing lower || lower' /= lower''
+                                                     then f object lower'' lower'
+                                                     else return []
                                                  innerUpper <-
-                                                   if upper' == upper''
-                                                     then return []
-                                                     else f object upper' upper''
+                                                   if isNothing upper || upper' /= upper''
+                                                     then f object upper' upper''
+                                                     else return []
                                                  let
                                                    inner' = M.unions [inner, M.fromList innerLower, M.fromList innerUpper]
                                                  unless (null innerLower && null innerUpper)
-                                                   . put $ H.insert object (lower'', upper'', inner') container
+                                                   . put $ H.insert object (Just . fst $ M.findMin inner', Just . fst $ M.findMax inner', inner') container
                                                  return $ subrange lower upper inner'
 
 
