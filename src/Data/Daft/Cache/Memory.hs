@@ -16,6 +16,7 @@ module Data.Daft.Cache.Memory (
 ) where
 
 
+import Control.Applicative ((<|>))
 import Control.Monad (unless)
 import Control.Monad.Except (MonadError(..), MonadIO)
 import Control.Monad.State (MonadState(..), StateT, runStateT, modify')
@@ -142,20 +143,26 @@ instance (Eq o, Hashable o, Ord k, MonadError String m) => Cache o k v (MemoryCa
                                                  let
                                                    inner' = M.unions [inner, M.fromList innerLower, M.fromList innerUpper]
                                                  unless (null innerLower && null innerUpper)
-                                                   . put $ H.insert object (Just . fst $ M.findMin inner', Just . fst $ M.findMax inner', inner') container
+                                                   . put
+                                                   $ H.insert object
+                                                     (
+                                                       lower'' <|> Just (fst $ M.findMin inner')
+                                                     , upper'' <|> Just (fst $ M.findMax inner')
+                                                     , inner'
+                                                     ) container
                                                  return $ subrange lower upper inner'
 
 
-splitLower :: Ord k => k -> M.Map k v -> M.Map k v
-splitLower key container =
+filterBelow :: Ord k => k -> M.Map k v -> M.Map k v
+filterBelow key container =
   let
     (lower, center, _) = M.splitLookup key container
   in
     maybe id (M.insert key) center lower
 
 
-splitUpper :: Ord k => k -> M.Map k v -> M.Map k v
-splitUpper key container =
+filterAbove :: Ord k => k -> M.Map k v -> M.Map k v
+filterAbove key container =
   let
     (_, center, upper) = M.splitLookup key container
   in
@@ -164,6 +171,6 @@ splitUpper key container =
 
 subrange :: Ord k => Maybe k -> Maybe k -> M.Map k v -> [(k, v)]
 subrange Nothing      Nothing      = M.toList                                      
-subrange Nothing      (Just upper) = M.toList .                    splitLower upper
-subrange (Just lower) Nothing      = M.toList . splitUpper lower                   
-subrange (Just lower) (Just upper) = M.toList . splitUpper lower . splitLower upper
+subrange Nothing      (Just upper) = M.toList .                     filterBelow upper
+subrange (Just lower) Nothing      = M.toList . filterAbove lower                   
+subrange (Just lower) (Just upper) = M.toList . filterAbove lower . filterBelow upper
