@@ -11,6 +11,7 @@ module Data.Daft.Vinyl.FieldRec.Instances (
 ) where
 
 
+import Data.Default.Util (Unknown(..))
 import Data.Default (Default(..))
 import Data.Vinyl.Core (Rec(..))
 import Data.Vinyl.Derived (ElField(..), FieldRec, )
@@ -22,3 +23,10 @@ instance Default (FieldRec '[]) where
 
 instance (KnownSymbol s, Default t, Default (FieldRec (rs :: [(Symbol, *)]))) => Default (FieldRec ('(s, t) ': rs)) where
   def = Field def :& def
+
+
+instance Unknown (FieldRec '[]) where
+  unknown = RNil
+
+instance (KnownSymbol s, Unknown t, Unknown (FieldRec (rs :: [(Symbol, *)]))) => Unknown (FieldRec ('(s, t) ': rs)) where
+  unknown = Field unknown :& unknown

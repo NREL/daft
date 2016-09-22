@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
@@ -8,6 +10,7 @@ module Data.Daft.Vinyl.FieldCube.IO (
   readFieldCube
 , readFieldCubeFile
 , readFieldCubeSource
+, readFieldCubeSource'
 -- * Output
 , showFieldCube
 , writeFieldCubeFile
@@ -15,12 +18,16 @@ module Data.Daft.Vinyl.FieldCube.IO (
 ) where
 
 
-import Control.Monad.Except (MonadError, MonadIO)
+import Control.Monad.Except (MonadError, MonadIO, throwError)
+import Data.Daft.DataCube (fromFunction)
 import Data.Daft.Source (DataSource(..))
 import Data.Daft.TypeLevel (Union)
 import Data.Daft.Vinyl.FieldCube (FieldCube)
 import Data.Daft.Vinyl.FieldRec (Labeled)
+import Data.Daft.Vinyl.FieldRec.Instances ()
 import Data.Daft.Vinyl.FieldRec.IO (ReadFieldRec, ShowFieldRec, readFieldRecs, readFieldRecFile, readFieldRecSource, showFieldRecs, writeFieldRecFile, writeFieldRecSource)
+import Data.Default.Util (Unknown(..))
+import Data.List.Util.Listable (fromTabbeds)
 import Data.String (IsString(..))
 import Data.String.ToString (ToString(..))
 import Data.Vinyl.Core ((<+>))
@@ -47,6 +54,13 @@ readFieldCubeSource :: forall ks vs e m a . (ks ⊆ Union ks vs, vs ⊆ Union ks
 readFieldCubeSource =
   fmap (C.fromTable (rcast :: FieldRec (Union ks vs) -> FieldRec ks) (rcast :: FieldRec (Union ks vs) -> FieldRec vs)) 
     . readFieldRecSource
+
+
+readFieldCubeSource' :: forall ks vs e m a . (ks ⊆ Union ks vs, vs ⊆ Union ks vs, Ord (FieldRec ks), Unknown (FieldRec vs), IsString e, MonadError e m, MonadIO m, Labeled (FieldRec (Union ks vs)), ReadFieldRec (Union ks vs)) => DataSource a -> m (FieldCube ks vs)
+readFieldCubeSource' FileData{..}    = fmap (C.fromTable (rcast :: FieldRec (Union ks vs) -> FieldRec ks) (rcast :: FieldRec (Union ks vs) -> FieldRec vs)) $ readFieldRecFile filePath
+readFieldCubeSource' TextData{..}    = fmap (C.fromTable (rcast :: FieldRec (Union ks vs) -> FieldRec ks) (rcast :: FieldRec (Union ks vs) -> FieldRec vs)) . readFieldRecs $ fromTabbeds parsableText
+readFieldCubeSource' BuiltinData{..} = throwError "Cannot read records from built-in data source."
+readFieldCubeSource' NoData          = return . fromFunction . const $ return unknown 
 
 
 showFieldCube :: forall ks vs . (Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs)) => FieldCube ks vs -> [[String]]
