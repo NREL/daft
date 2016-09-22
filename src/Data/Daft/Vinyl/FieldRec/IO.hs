@@ -65,7 +65,7 @@ readFieldRecs :: forall s e m fields . (Eq s, IsString s, ToString s, IsString e
 readFieldRecs [] = throwError "a header must be specified"
 readFieldRecs (headerRow : dataRows)
   | isNothing permutation       = throwError "header names do not match field names"
-  | n /= length signature       = throwError "header and field names differ in length"
+  | n < length signature        = throwError "header is missing field names"
   | n /= length (nub headerRow) = throwError "header contains duplicate names"
   | otherwise                   = mapM (readFieldRec =<<) dataRows'
     where 
