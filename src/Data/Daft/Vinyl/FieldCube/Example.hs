@@ -32,7 +32,7 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Daft.DataCube (fromFunction)
-import Data.Daft.Vinyl.FieldCube (type (↝), (⋈), (!), ρ)
+import Data.Daft.Vinyl.FieldCube (type (↝), type (-↝), (⋈), (!), ρ)
 import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
 import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))
 import Data.List.Util.Listable (toTabbeds)
@@ -80,7 +80,7 @@ states =
 
 
 -- A hash function on state names.
-hashStates :: '[StateUSPS] ↝ '[StateHash]
+hashStates :: '[StateUSPS] -↝ '[StateHash]
 hashStates =
   fromFunction $ \k ->
     let
@@ -119,7 +119,7 @@ interest =
 
 
 -- An example join.
-hashedStates :: '[StateUSPS] ↝ '[StateName, StateHash]
+hashedStates :: '[StateUSPS] -↝ '[StateName, StateHash]
 hashedStates = states ⋈  hashStates
 
 
