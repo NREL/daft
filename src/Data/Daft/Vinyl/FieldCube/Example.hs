@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds                       #-}
+{-# LANGUAGE ImpredicativeTypes              #-}
 {-# LANGUAGE TypeOperators                   #-}
 
 {-# OPTIONS_GHC -fno-warn-unused-binds       #-}
@@ -32,7 +33,7 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Daft.DataCube (fromFunction)
-import Data.Daft.Vinyl.FieldCube (type (↝), type (-↝), (⋈), (!), ρ)
+import Data.Daft.Vinyl.FieldCube (type (↝), type (+↝), type (-↝), (⋈), (!), ε, ρ)
 import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
 import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))
 import Data.List.Util.Listable (toTabbeds)
@@ -63,7 +64,7 @@ sLatitude  = SField :: SField Latitude
 
 
 -- Some data about states.
-states :: '[StateUSPS] ↝ '[StateName]
+states :: '[StateUSPS] +↝ '[StateName]
 states =
   let
     statesRaw =
@@ -74,7 +75,7 @@ states =
       , ["\"NM\""    , "\"New Mexico\"" ]
       , ["\"CO\""    , "\"Colorado\""   ]
       ]
-    Right stateRecs = readFieldCube statesRaw :: Either String ('[StateUSPS] ↝ '[StateName])
+    Right stateRecs = readFieldCube statesRaw :: Either String ('[StateUSPS] +↝ '[StateName])
   in
     stateRecs
 
@@ -90,7 +91,7 @@ hashStates =
 
 
 -- Some data about cities.
-cities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude]
+cities :: '[StateUSPS, CityName] +↝ '[Longitude, Latitude]
 cities =
   let
     citiesRaw =
@@ -102,7 +103,7 @@ cities =
       , ["\"CO\""    , "\"Golden\""       , "-105.2211"      , "39.7555"       ]
       , ["\"CO\""    , "\"Denver\""       , "-104.9903"      , "39.7392"       ]
       ]
-    Right cityRecs = readFieldCube citiesRaw :: Either String ('[StateUSPS, CityName] ↝ '[Longitude, Latitude])
+    Right cityRecs = readFieldCube citiesRaw :: Either String ('[StateUSPS, CityName] +↝ '[Longitude, Latitude])
   in
     cityRecs
 
@@ -123,9 +124,9 @@ hashedStates :: '[StateUSPS] -↝ '[StateName, StateHash]
 hashedStates = states ⋈  hashStates
 
 
--- Another example join.
+-- Another example join, but without reification.
 hashedStatesCities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash]
-hashedStatesCities = ρ interest $ cities ⋈  hashedStates
+hashedStatesCities = ε $ cities ⋈  hashedStates  -- We're existentially quantifying this so that the resulting cube type is generic.
 
 
 -- Simple example of some joins of tables and functions.
@@ -133,17 +134,18 @@ main :: IO ()
 main =
   do
     let
+      hashedStatesCities'' = ρ interest hashedStatesCities
     putStrLn ""
     putStrLn "Example of evaluation:"
     print $ hashedStates ! (sStateUSPS =: "CA")
     putStrLn ""
     putStrLn "Result of some joins with tables and functions:"
-    putStrLn . toTabbeds $ showFieldCube hashedStatesCities
+    putStrLn . toTabbeds $ showFieldCube hashedStatesCities''
     putStrLn "Encoding as JSON:"
-    mapM_ (putStrLn . unpack . A.encode) $ A.toArray hashedStatesCities
+    mapM_ (putStrLn . unpack . A.encode) $ A.toArray hashedStatesCities''
     let
-      hashedStatesCities' :: Maybe ('[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash])
-      hashedStatesCities' = A.fromArray $ A.toArray hashedStatesCities 
+      hashedStatesCities' :: Maybe ('[StateUSPS, CityName] +↝ '[Longitude, Latitude, StateName, StateHash])
+      hashedStatesCities' = A.fromArray $ A.toArray hashedStatesCities''
     putStrLn ""
     putStrLn "Correctly decoding JSON:"
     print $ isJust hashedStatesCities'

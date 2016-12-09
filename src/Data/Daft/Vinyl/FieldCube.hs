@@ -1,11 +1,12 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RankNTypes       #-}
-{-# LANGUAGE TypeOperators    #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE RankNTypes                #-}
+{-# LANGUAGE TypeOperators             #-}
 
 
 module Data.Daft.Vinyl.FieldCube (
 -- * Types
-  type (+↝)
+  type (↝)
+, type (+↝)
 , type (-↝)
 , FieldCube
 , FieldGregator
@@ -14,6 +15,7 @@ module Data.Daft.Vinyl.FieldCube (
 , toRecords
 , toKnownRecords
 , τ
+, ε
 -- * Evaluation
 , (!)
 -- * Selection, projection, and aggregation
@@ -32,7 +34,7 @@ module Data.Daft.Vinyl.FieldCube (
 
 
 import Control.Applicative (liftA2)
-import Data.Daft.DataCube (DataCube, FunctionCube, Joinable, TableCube)
+import Data.Daft.DataCube (DataCube(..), FunctionCube, Join, Joinable, TableCube)
 import Data.Daft.TypeLevel (Intersection)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
 import Data.Maybe (fromMaybe)
@@ -44,6 +46,12 @@ import Data.Vinyl.TypeLevel (type (++))
 
 import qualified Data.Daft.DataCube as C -- (Gregator(..), Joiner(Joiner), aggregateWithKey, antijoin, disaggregateWithKey, evaluate, fromTable, join, knownKeys, projectWithKey, reify, selectWithKey, semijoin, toKnownTable, toTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
+
+
+type ks ↝ vs = C.ExistentialCube (FieldRec ks) (FieldRec vs)
+
+ε :: DataCube cube => FieldCube cube ks vs -> C.ExistentialCube (FieldRec ks) (FieldRec vs)
+ε = C.ExistentialCube
 
 
 type ks +↝ vs = TableCube (FieldRec ks) (FieldRec vs)
@@ -114,8 +122,8 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 ω = S.map rcast . C.knownKeys
 
 
-(⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k), DataCube cubeLeft, DataCube cubeRight, DataCube cube, Joinable cubeLeft cubeRight cube) -- FIXME: This can be simplified somewhat.
-    => FieldCube cubeLeft kLeft vLeft -> FieldCube cubeRight kRight vRight -> FieldCube cube k v
+(⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
+    => FieldCube cubeLeft kLeft vLeft -> FieldCube cubeRight kRight vRight -> FieldCube (Join cubeLeft cubeRight) k v
 (⋈) = C.join (C.Joiner rjoin rcast rcast) runion
 infixl 6 ⋈
 

@@ -1,16 +1,19 @@
-{-# LANGUAGE FlexibleInstances      #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE RecordWildCards        #-}
-{-# LANGUAGE ScopedTypeVariables    #-}
-{-# LANGUAGE TupleSections          #-}
-{-# LANGUAGE TypeFamilies           #-}
-{-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE TupleSections             #-}
+{-# LANGUAGE TypeFamilies              #-}
+{-# LANGUAGE UndecidableInstances      #-}
 
 
 module Data.Daft.DataCube (
 -- * Types
   DataCube(..)
 , TableCube
+, ExistentialCube(..)
+, Join
 , Joinable(..)
 , FunctionCube
 , Rekeyer(..)
@@ -116,10 +119,18 @@ type family Join c1 c2 :: * -> * -> * where
   Join a b = FunctionCube
 
 
-class Joinable c1 c2 c3 where
-  join :: (Ord k1, Ord k2, Ord k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> c3 k3 v3
+data JoinSelf
+data JoinAny
 
-instance (Join c1 c2 ~ c3, JoinStyle c1 c2 ~ flag, Joinable' flag c1 c2 c3) => Joinable c1 c2 c3 where
+type family JoinStyle (c1 :: * -> * -> *) (c2 :: * -> * -> *) where
+  JoinStyle a a = JoinSelf
+  JoinStyle a b = JoinAny
+
+
+class Joinable c1 c2 where
+  join :: (Ord k1, Ord k2, Ord k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> (Join c1 c2) k3 v3
+
+instance (JoinStyle c1 c2 ~ flag, Joinable' flag c1 c2 (Join c1 c2)) => Joinable c1 c2 where
   join = join' (Proxy :: Proxy flag)
 
 
@@ -133,12 +144,21 @@ instance (DataCube c1, DataCube c2) => Joinable' JoinAny c1 c2 FunctionCube wher
   join' _ = joinAny
 
 
-data JoinSelf
-data JoinAny
+data ExistentialCube ks vs = forall cube . DataCube cube => ExistentialCube (cube ks vs)
 
-type family JoinStyle (c1 :: * -> * -> *) (c2 :: * -> * -> *) where
-  JoinStyle a a = JoinSelf
-  JoinStyle a b = JoinAny
+instance DataCube ExistentialCube where
+  evaluate (ExistentialCube c) = evaluate c
+  selectWithKey f (ExistentialCube c) = ExistentialCube $ selectWithKey f c
+  selectRange k1 k2 (ExistentialCube c) = ExistentialCube $ selectRange k1 k2 c
+  knownKeys (ExistentialCube c) = knownKeys c
+  selectKnownMinimum (ExistentialCube c) = selectKnownMinimum c
+  selectKnownMaximum (ExistentialCube c) = selectKnownMaximum c
+  projectWithKey f (ExistentialCube c) = ExistentialCube $ projectWithKey f c
+  projectKnownKeys f (ExistentialCube c) = projectKnownKeys f c
+  rekey f (ExistentialCube c) = ExistentialCube $ rekey f c
+  aggregateWithKey f g (ExistentialCube c) = ExistentialCube $ aggregateWithKey f g c
+  disaggregateWithKey f g (ExistentialCube c) = ExistentialCube $ disaggregateWithKey f g c
+  joinSelf f g (ExistentialCube c1) (ExistentialCube c2) = ExistentialCube $ joinAny f g c1 c2 -- FIXME: Danger--optimizations are lost here because it uses `joinAny` instead of `join`.  Maybe we could use a view pattern here?
 
 
 type TableCube = Map

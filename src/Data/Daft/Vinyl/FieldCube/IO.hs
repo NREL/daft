@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
@@ -18,8 +17,7 @@ module Data.Daft.Vinyl.FieldCube.IO (
 ) where
 
 
-import Control.Monad.Except (MonadError, MonadIO, throwError)
-import Data.Daft.DataCube (DataCube, fromFunction)
+import Control.Monad.Except (MonadError, MonadIO)
 import Data.Daft.Source (DataSource(..))
 import Data.Daft.TypeLevel (Union)
 import Data.Daft.Vinyl.FieldCube (FieldCube, type (+↝))
@@ -27,7 +25,6 @@ import Data.Daft.Vinyl.FieldRec (Labeled)
 import Data.Daft.Vinyl.FieldRec.Instances ()
 import Data.Daft.Vinyl.FieldRec.IO (ReadFieldRec, ShowFieldRec, readFieldRecs, readFieldRecFile, readFieldRecSource, showFieldRecs, writeFieldRecFile, writeFieldRecSource)
 import Data.Default.Util (Unknown(..))
-import Data.List.Util.Listable (fromTabbeds)
 import Data.String (IsString(..))
 import Data.String.ToString (ToString(..))
 import Data.Vinyl.Core ((<+>))
