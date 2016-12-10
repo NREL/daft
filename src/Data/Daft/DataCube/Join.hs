@@ -42,6 +42,13 @@ instance (JoinStyle c1 c2 ~ flag, Joinable' flag c1 c2 (Join c1 c2)) => Joinable
   join = join' (Proxy :: Proxy flag)
 
 
+data Dummy1 k v
+data Dummy2 k v
+
+instance Joinable Dummy1 Dummy2 where
+  join = undefined
+
+
 class Joinable' flag c1 c2 c3 where
   join' :: (Ord k1, Ord k2, Ord k3) => Proxy flag -> Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> c3 k3 v3
 
