@@ -3,7 +3,7 @@
 
 module Data.Daft.DataCube.Function (
 -- * Types
-  FunctionCube
+  FunctionCube(..)
 -- * Conversion
 , fromFunction
 -- * Joins

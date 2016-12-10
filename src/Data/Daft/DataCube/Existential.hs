@@ -38,4 +38,6 @@ instance DataCube ExistentialCube where
 
   disaggregateWithKey f g (ExistentialCube c) = ExistentialCube $ disaggregateWithKey f g c
 
-  joinSelf f g (ExistentialCube c1) (ExistentialCube c2) = ExistentialCube $ joinAny f g c1 c2 -- FIXME: Danger--optimizations are lost here because it uses `joinAny` instead of `join`.  Maybe we could use a view pattern here?
+  joinSelf f g (ExistentialCube c1) (ExistentialCube c2) =
+    ExistentialCube
+      $ joinAny f g c1 c2 -- FIXME: In order to maintain optimizations, we need 'join' here instead of 'joinAny'.
