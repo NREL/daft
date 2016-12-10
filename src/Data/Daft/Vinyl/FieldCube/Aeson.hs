@@ -11,7 +11,7 @@ module Data.Daft.Vinyl.FieldCube.Aeson (
 
 
 import Data.Aeson.Types (FromJSON(..), Parser, ToJSON(..), Value, parseMaybe)
-import Data.Daft.DataCube (fromTableM, toKnownTable)
+import Data.Daft.DataCube.Table (fromTableM, toKnownTable)
 import Data.Daft.Vinyl.FieldCube (type (+↝))
 import Data.Daft.Vinyl.FieldRec.Aeson ()
 import Data.Vinyl.Core ((<+>))

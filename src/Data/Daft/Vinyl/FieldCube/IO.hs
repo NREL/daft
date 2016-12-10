@@ -35,7 +35,7 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
-import qualified Data.Daft.DataCube as C (fromTable, toKnownTable)
+import qualified Data.Daft.DataCube.Table as C (fromTable, toKnownTable)
 
 
 readFieldCube :: forall ks vs s e m . (ks ⊆ Union ks vs, vs ⊆ Union ks vs, Ord (FieldRec ks), Eq s, IsString s, ToString s, IsString e, MonadError e m, Labeled (FieldRec (Union ks vs)), ReadFieldRec (Union ks vs)) => [[s]] -> m (ks +↝ vs)

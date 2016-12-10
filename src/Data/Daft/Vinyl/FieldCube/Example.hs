@@ -32,7 +32,7 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 
 import Data.ByteString.Lazy.Char8 (unpack)
-import Data.Daft.DataCube (fromFunction)
+import Data.Daft.DataCube.Function (fromFunction)
 import Data.Daft.Vinyl.FieldCube (type (↝), type (+↝), type (-↝), (⋈), (!), ε, ρ)
 import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
 import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))

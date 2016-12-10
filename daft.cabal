@@ -1,5 +1,5 @@
 name:                daft
-version:             0.4.11.2
+version:             0.4.12.0
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -10,6 +10,10 @@ library
   exposed-modules : Data.Daft.Cache
                     Data.Daft.Cache.Memory
                     Data.Daft.DataCube
+                    Data.Daft.DataCube.Existential
+                    Data.Daft.DataCube.Function
+                    Data.Daft.DataCube.Join
+                    Data.Daft.DataCube.Table
                     Data.Daft.Keyed
                     Data.Daft.Lookup
                     Data.Daft.Source

@@ -34,7 +34,10 @@ module Data.Daft.Vinyl.FieldCube (
 
 
 import Control.Applicative (liftA2)
-import Data.Daft.DataCube (DataCube(..), FunctionCube, Join, Joinable, TableCube)
+import Data.Daft.DataCube (DataCube(..))
+import Data.Daft.DataCube.Function (FunctionCube)
+import Data.Daft.DataCube.Join (Join, Joinable)
+import Data.Daft.DataCube.Table (TableCube)
 import Data.Daft.TypeLevel (Intersection)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
 import Data.Maybe (fromMaybe)
@@ -44,7 +47,10 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
-import qualified Data.Daft.DataCube as C -- (Gregator(..), Joiner(Joiner), aggregateWithKey, antijoin, disaggregateWithKey, evaluate, fromTable, join, knownKeys, projectWithKey, reify, selectWithKey, semijoin, toKnownTable, toTable)
+import qualified Data.Daft.DataCube as C
+import qualified Data.Daft.DataCube.Existential as C
+import qualified Data.Daft.DataCube.Join as C
+import qualified Data.Daft.DataCube.Table as C
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
