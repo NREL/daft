@@ -3,7 +3,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TupleSections              #-}
 
 
 module Data.Daft.Cache.Memory (
@@ -24,8 +23,8 @@ import Data.Daft.Cache (Cache(..), maximum', minimum')
 import Data.Hashable (Hashable)
 import Data.Maybe (isNothing)
 
-import qualified Data.HashMap.Strict as H
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as H (HashMap, delete, empty, fromList, insert, keys, lookup, size)
+import qualified Data.Map.Strict as M (Map, empty, findMin, findMax, fromList, insert, keys, lookup, null, singleton, splitLookup, size, toList, unions)
 
 
 type Container o k v = H.HashMap o (Maybe k, Maybe k, M.Map k v)

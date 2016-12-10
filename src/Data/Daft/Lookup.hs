@@ -1,6 +1,5 @@
-{-# LANGUAGE FlexibleInstances      #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE Safe                   #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE FunctionalDependencies    #-}
 
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 

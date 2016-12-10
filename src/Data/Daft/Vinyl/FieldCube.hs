@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts          #-}
-{-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE TypeOperators             #-}
 
 
@@ -47,10 +46,10 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
-import qualified Data.Daft.DataCube as C
-import qualified Data.Daft.DataCube.Existential as C
-import qualified Data.Daft.DataCube.Join as C
-import qualified Data.Daft.DataCube.Table as C
+import qualified Data.Daft.DataCube as C (DataCube(..), Gregator(..), Joiner(..))
+import qualified Data.Daft.DataCube.Existential as C (ExistentialCube(..))
+import qualified Data.Daft.DataCube.Join as C (antijoin, join, semijoin)
+import qualified Data.Daft.DataCube.Table as C (reify, fromTable, toKnownTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
