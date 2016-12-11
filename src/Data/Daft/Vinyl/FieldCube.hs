@@ -53,16 +53,17 @@ import qualified Data.Daft.DataCube.Table as C (reify, fromTable, toKnownTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
-type ks ↝ vs = C.ExistentialCube (FieldRec ks) (FieldRec vs)
-
 ε :: DataCube cube => FieldCube cube ks vs -> C.ExistentialCube (FieldRec ks) (FieldRec vs)
 ε = C.ExistentialCube
 
 
-type ks +↝ vs = TableCube (FieldRec ks) (FieldRec vs)
+type ks ↝ vs = FieldCube C.ExistentialCube ks vs
 
 
-type ks -↝ vs = FunctionCube (FieldRec ks) (FieldRec vs)
+type ks +↝ vs = FieldCube TableCube ks vs
+
+
+type ks -↝ vs = FieldCube FunctionCube ks vs
 
 
 type FieldCube cube ks vs = cube (FieldRec ks) (FieldRec vs)
