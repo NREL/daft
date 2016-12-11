@@ -41,3 +41,4 @@ instance DataCube ExistentialCube where
   joinSelf f g (ExistentialCube c1) (ExistentialCube c2) =
     ExistentialCube
       $ joinAny f g c1 c2 -- FIXME: In order to maintain optimizations, we need 'join' here instead of 'joinAny'.
+                          -- It seems that 'Data.Typeable.cast' and 'Data.Typeable.eqT' could be used to do this.
