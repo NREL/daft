@@ -1,5 +1,5 @@
 name:                daft
-version:             0.4.12.5
+version:             0.4.13.0
 license:             AllRightsReserved
 category:            Data
 build-type:          Simple
@@ -13,6 +13,7 @@ library
                     Data.Daft.DataCube.Existential
                     Data.Daft.DataCube.Function
                     Data.Daft.DataCube.Join
+                    Data.Daft.DataCube.Sum
                     Data.Daft.DataCube.Table
                     Data.Daft.Keyed
                     Data.Daft.Lookup

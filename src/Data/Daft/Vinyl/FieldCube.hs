@@ -15,6 +15,8 @@ module Data.Daft.Vinyl.FieldCube (
 , toKnownRecords
 , τ
 , ε
+, θ
+, φ
 -- * Evaluation
 , (!)
 -- * Selection, projection, and aggregation
@@ -34,8 +36,10 @@ module Data.Daft.Vinyl.FieldCube (
 
 import Control.Applicative (liftA2)
 import Data.Daft.DataCube (DataCube(..))
+import Data.Daft.DataCube.Existential (ExistentialCube(..))
 import Data.Daft.DataCube.Function (FunctionCube)
 import Data.Daft.DataCube.Join (Join, Joinable)
+import Data.Daft.DataCube.Sum (SumCube(..))
 import Data.Daft.DataCube.Table (TableCube)
 import Data.Daft.TypeLevel (Intersection)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
@@ -47,17 +51,24 @@ import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
 import qualified Data.Daft.DataCube as C (DataCube(..), Gregator(..), Joiner(..))
-import qualified Data.Daft.DataCube.Existential as C (ExistentialCube(..))
 import qualified Data.Daft.DataCube.Join as C (antijoin, join, semijoin)
 import qualified Data.Daft.DataCube.Table as C (reify, fromTable, toKnownTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
-ε :: DataCube cube => FieldCube cube ks vs -> C.ExistentialCube (FieldRec ks) (FieldRec vs)
-ε = C.ExistentialCube
+ε :: DataCube cube => FieldCube cube ks vs -> FieldCube ExistentialCube ks vs
+ε = ExistentialCube
 
 
-type ks ↝ vs = FieldCube C.ExistentialCube ks vs
+θ :: ks +↝ vs -> ks ↝ vs
+θ = TableSumCube
+
+
+φ :: ks -↝ vs -> ks ↝ vs
+φ = FunctionSumCube
+
+
+type ks ↝ vs = FieldCube SumCube ks vs
 
 
 type ks +↝ vs = FieldCube TableCube ks vs
@@ -97,7 +108,7 @@ toKnownRecords = C.toKnownTable runion
 π = C.projectWithKey
 
 
-ρ :: DataCube cube => Ord (FieldRec ks) => Set (FieldRec ks) -> FieldCube cube ks vs -> ks +↝ vs
+ρ :: (DataCube cube, Ord (FieldRec ks)) => Set (FieldRec ks) -> FieldCube cube ks vs -> ks +↝ vs
 ρ = C.reify
 
 

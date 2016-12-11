@@ -33,7 +33,7 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Daft.DataCube.Function (fromFunction)
-import Data.Daft.Vinyl.FieldCube (type (↝), type (+↝), type (-↝), (⋈), (!), ε, ρ)
+import Data.Daft.Vinyl.FieldCube (type (↝), type (+↝), (⋈), (!), θ, ρ, φ)
 import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
 import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))
 import Data.List.Util.Listable (toTabbeds)
@@ -64,7 +64,7 @@ sLatitude  = SField :: SField Latitude
 
 
 -- Some data about states.
-states :: '[StateUSPS] +↝ '[StateName]
+states :: '[StateUSPS] ↝ '[StateName]
 states =
   let
     statesRaw =
@@ -77,13 +77,13 @@ states =
       ]
     Right stateRecs = readFieldCube statesRaw :: Either String ('[StateUSPS] +↝ '[StateName])
   in
-    stateRecs
+    θ stateRecs
 
 
 -- A hash function on state names.
-hashStates :: '[StateUSPS] -↝ '[StateHash]
+hashStates :: '[StateUSPS] ↝ '[StateHash]
 hashStates =
-  fromFunction $ \k ->
+  φ . fromFunction $ \k ->
     let
       stateUSPS = sStateUSPS <: k
     in
@@ -91,7 +91,7 @@ hashStates =
 
 
 -- Some data about cities.
-cities :: '[StateUSPS, CityName] +↝ '[Longitude, Latitude]
+cities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude]
 cities =
   let
     citiesRaw =
@@ -105,7 +105,7 @@ cities =
       ]
     Right cityRecs = readFieldCube citiesRaw :: Either String ('[StateUSPS, CityName] +↝ '[Longitude, Latitude])
   in
-    cityRecs
+    θ cityRecs
 
 
 -- Some areas of interest.
@@ -120,13 +120,13 @@ interest =
 
 
 -- An example join.
-hashedStates :: '[StateUSPS] -↝ '[StateName, StateHash]
+hashedStates :: '[StateUSPS] ↝ '[StateName, StateHash]
 hashedStates = states ⋈  hashStates
 
 
 -- Another example join, but without reification.
 hashedStatesCities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash]
-hashedStatesCities = ε $ cities ⋈  hashedStates  -- We're existentially quantifying this so that the resulting cube type is generic.
+hashedStatesCities = cities ⋈  hashedStates
 
 
 -- Simple example of some joins of tables and functions.
