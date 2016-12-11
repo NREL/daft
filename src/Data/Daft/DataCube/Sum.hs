@@ -1,6 +1,8 @@
 module Data.Daft.DataCube.Sum (
 -- * Types
   SumCube(..)
+, asTableCube
+, asFunctionCube
 ) where
 
 
@@ -90,3 +92,13 @@ instance DataCube SumCube where
   joinSelf f g (TableSumCube    c1) (FunctionSumCube c2) = FunctionSumCube $ joinAny  f g c1 c2
   joinSelf f g (FunctionSumCube c1) (TableSumCube    c2) = FunctionSumCube $ joinAny  f g c1 c2
   joinSelf f g (FunctionSumCube c1) (FunctionSumCube c2) = FunctionSumCube $ joinSelf f g c1 c2
+
+
+asTableCube :: SumCube k v -> TableCube k v
+asTableCube (TableSumCube    c) = c
+asTableCube (FunctionSumCube _) = empty
+
+
+asFunctionCube :: Ord k => SumCube k v -> FunctionCube k v
+asFunctionCube (TableSumCube    c) = FunctionCube $ evaluate c
+asFunctionCube (FunctionSumCube c) = c
