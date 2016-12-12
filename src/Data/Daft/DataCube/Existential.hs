@@ -9,6 +9,7 @@ module Data.Daft.DataCube.Existential (
 
 import Data.Daft.DataCube (DataCube(..))
 import Data.Daft.DataCube.Function (joinAny)
+import Data.Maybe (fromJust)
 import Data.Typeable (Typeable, cast, typeOf2)
 
 
@@ -40,11 +41,6 @@ instance DataCube ExistentialCube where
   disaggregateWithKey f g (ExistentialCube c) = ExistentialCube $ disaggregateWithKey f g c
 
   joinSelf f g (ExistentialCube c1) (ExistentialCube c2) =
-    ExistentialCube
-      $ if typeOf2 c1 == typeOf2 c2 -- FIXME: Will this work? since we want to test the type at * -> * -> *, not just at *.
-          then let
-                 Just c1' = cast c1
-                 Just c2' = cast c2
-               in
-                 joinSelf f g c1' c2'
-          else joinAny f g c1 c2
+    if typeOf2 c1 == typeOf2 c2
+      then ExistentialCube $ joinSelf f g c1 $ fromJust $ cast c2
+      else ExistentialCube $ joinAny  f g c1                   c2

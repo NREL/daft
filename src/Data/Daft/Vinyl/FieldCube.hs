@@ -5,6 +5,7 @@
 module Data.Daft.Vinyl.FieldCube (
 -- * Types
   type (↝)
+, type (*↝)
 , type (+↝)
 , type (-↝)
 , FieldCube
@@ -57,7 +58,7 @@ import qualified Data.Daft.DataCube.Table as C (reify, fromTable, toKnownTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
-ε :: (Typeable cube, DataCube cube) => FieldCube cube ks vs -> FieldCube ExistentialCube ks vs
+ε :: (Typeable cube, DataCube cube) => FieldCube cube ks vs -> ks *↝ vs
 ε = ExistentialCube
 
 
@@ -70,6 +71,9 @@ import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
 type ks ↝ vs = FieldCube SumCube ks vs
+
+
+type ks *↝ vs = FieldCube ExistentialCube ks vs
 
 
 type ks +↝ vs = FieldCube TableCube ks vs

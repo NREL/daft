@@ -33,7 +33,7 @@ module Data.Daft.Vinyl.FieldCube.Example (
 
 import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Daft.DataCube.Function (fromFunction)
-import Data.Daft.Vinyl.FieldCube (type (↝), type (+↝), (⋈), (!), θ, ρ, φ)
+import Data.Daft.Vinyl.FieldCube (type (*↝), type (+↝), (⋈), (!), ε, θ, ρ, φ)
 import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
 import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))
 import Data.List.Util.Listable (toTabbeds)
@@ -64,7 +64,7 @@ sLatitude  = SField :: SField Latitude
 
 
 -- Some data about states.
-states :: '[StateUSPS] ↝ '[StateName]
+states :: '[StateUSPS] *↝ '[StateName]
 states =
   let
     statesRaw =
@@ -77,13 +77,13 @@ states =
       ]
     Right stateRecs = readFieldCube statesRaw :: Either String ('[StateUSPS] +↝ '[StateName])
   in
-    θ stateRecs
+    ε stateRecs
 
 
 -- A hash function on state names.
-hashStates :: '[StateUSPS] ↝ '[StateHash]
+hashStates :: '[StateUSPS] *↝ '[StateHash]
 hashStates =
-  φ . fromFunction $ \k ->
+  ε . fromFunction $ \k ->
     let
       stateUSPS = sStateUSPS <: k
     in
@@ -91,7 +91,7 @@ hashStates =
 
 
 -- Some data about cities.
-cities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude]
+cities :: '[StateUSPS, CityName] *↝ '[Longitude, Latitude]
 cities =
   let
     citiesRaw =
@@ -105,7 +105,7 @@ cities =
       ]
     Right cityRecs = readFieldCube citiesRaw :: Either String ('[StateUSPS, CityName] +↝ '[Longitude, Latitude])
   in
-    θ cityRecs
+    ε cityRecs
 
 
 -- Some areas of interest.
@@ -120,12 +120,12 @@ interest =
 
 
 -- An example join.
-hashedStates :: '[StateUSPS] ↝ '[StateName, StateHash]
+hashedStates :: '[StateUSPS] *↝ '[StateName, StateHash]
 hashedStates = states ⋈  hashStates
 
 
 -- Another example join, but without reification.
-hashedStatesCities :: '[StateUSPS, CityName] ↝ '[Longitude, Latitude, StateName, StateHash]
+hashedStatesCities :: '[StateUSPS, CityName] *↝ '[Longitude, Latitude, StateName, StateHash]
 hashedStatesCities = cities ⋈  hashedStates
 
 
@@ -139,7 +139,10 @@ main =
     putStrLn "Example of evaluation:"
     print $ hashedStates ! (sStateUSPS =: "CA")
     putStrLn ""
-    putStrLn "Result of some joins with tables and functions:"
+    putStrLn "Result of join with tables:"
+    putStrLn . toTabbeds $ showFieldCube $ ρ interest $ cities ⋈  states
+    putStrLn ""
+    putStrLn "Result of join with table and function:"
     putStrLn . toTabbeds $ showFieldCube hashedStatesCities''
     putStrLn "Encoding as JSON:"
     mapM_ (putStrLn . unpack . A.encode) $ A.toArray hashedStatesCities''
