@@ -12,7 +12,6 @@ module Data.Daft.DataCube (
 
 import Data.Maybe (isJust, mapMaybe)
 import Data.Set (Set)
-import Data.Typeable (Typeable)
 import GHC.Exts (IsList(Item))
 
 import qualified Data.Set as S (null, size)
@@ -73,7 +72,7 @@ class DataCube (cube :: * -> * -> *) where
   
   disaggregateWithKey :: Ord k' => Gregator k' k -> (k' -> v -> v') -> cube k v -> cube k' v'
 
-  joinSelf :: (Typeable k1, Typeable k2, Typeable k3, Typeable v1, Typeable v2, Typeable v3, Ord k1, Ord k2, Ord k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube k2 v2 -> cube k3 v3
+  joinSelf :: (Ord k1, Ord k2, Ord k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube k2 v2 -> cube k3 v3
 
 
 data Rekeyer a b =

@@ -2,11 +2,14 @@
 {-# LANGUAGE TypeOperators             #-}
 
 
+{-# OPTIONS_GHC -fno-warn-deprecations #-}
+
+
 module Data.Daft.Vinyl.FieldCube (
 -- * Types
   type (↝)
-, type (*↝)
 , type (+↝)
+, type (*↝)
 , type (-↝)
 , FieldCube
 , FieldGregator
@@ -45,8 +48,8 @@ import Data.Daft.DataCube.Table (TableCube)
 import Data.Daft.TypeLevel (Intersection)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
 import Data.Maybe (fromMaybe)
-import Data.Set (Set)
 import Data.Typeable (Typeable)
+import Data.Set (Set)
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
@@ -58,25 +61,28 @@ import qualified Data.Daft.DataCube.Table as C (reify, fromTable, toKnownTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
-ε :: (Typeable cube, DataCube cube) => FieldCube cube ks vs -> ks *↝ vs
+ε :: (Typeable cube, DataCube cube) => FieldCube cube ks vs -> ks ↝ vs
 ε = ExistentialCube
 
 
-θ :: ks +↝ vs -> ks ↝ vs
+{-# DEPRECATED θ, φ, (+↝) "Use (↝) and ε instead." #-}
+
+
+θ :: ks *↝ vs -> ks +↝ vs
 θ = TableSumCube
 
 
-φ :: ks -↝ vs -> ks ↝ vs
+φ :: ks -↝ vs -> ks +↝ vs
 φ = FunctionSumCube
 
 
-type ks ↝ vs = FieldCube SumCube ks vs
+type ks ↝ vs = FieldCube ExistentialCube ks vs
 
 
-type ks *↝ vs = FieldCube ExistentialCube ks vs
+type ks +↝ vs = FieldCube SumCube ks vs
 
 
-type ks +↝ vs = FieldCube TableCube ks vs
+type ks *↝ vs = FieldCube TableCube ks vs
 
 
 type ks -↝ vs = FieldCube FunctionCube ks vs
@@ -85,7 +91,7 @@ type ks -↝ vs = FieldCube FunctionCube ks vs
 type FieldCube cube ks vs = cube (FieldRec ks) (FieldRec vs)
 
 
-fromRecords :: (ks ⊆ as, vs ⊆ as, RUnion ks vs as, Ord (FieldRec ks)) => [FieldRec as] -> ks +↝ vs
+fromRecords :: (ks ⊆ as, vs ⊆ as, RUnion ks vs as, Ord (FieldRec ks)) => [FieldRec as] -> ks *↝ vs
 fromRecords = C.fromTable rcast rcast
 
 
@@ -93,7 +99,7 @@ toRecords :: (Ord (FieldRec ks), RUnion ks vs as, DataCube cube) => [FieldRec ks
 toRecords = C.toTable runion
 
 
-toKnownRecords :: (Ord (FieldRec ks), RUnion ks vs as) => ks +↝ vs -> [FieldRec as]
+toKnownRecords :: (Ord (FieldRec ks), RUnion ks vs as) => ks *↝ vs -> [FieldRec as]
 toKnownRecords = C.toKnownTable runion
 
 
@@ -113,7 +119,7 @@ toKnownRecords = C.toKnownTable runion
 π = C.projectWithKey
 
 
-ρ :: (DataCube cube, Ord (FieldRec ks)) => Set (FieldRec ks) -> FieldCube cube ks vs -> ks +↝ vs
+ρ :: (DataCube cube, Ord (FieldRec ks)) => Set (FieldRec ks) -> FieldCube cube ks vs -> ks *↝ vs
 ρ = C.reify
 
 
@@ -144,7 +150,7 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 ω = S.map rcast . C.knownKeys
 
 
-(⋈) :: (Typeable kLeft, Typeable kRight, Typeable k, Typeable vLeft, Typeable vRight, Typeable v, Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
+(⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
     => FieldCube cubeLeft kLeft vLeft -> FieldCube cubeRight kRight vRight -> FieldCube (Join cubeLeft cubeRight) k v
 (⋈) = C.join (C.Joiner rjoin rcast rcast) runion
 infixl 6 ⋈

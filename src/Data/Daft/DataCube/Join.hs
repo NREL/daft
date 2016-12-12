@@ -19,7 +19,6 @@ module Data.Daft.DataCube.Join (
 import Data.Daft.DataCube (DataCube(..), Joiner(..))
 import Data.Daft.DataCube.Function (FunctionCube, joinAny)
 import Data.Proxy (Proxy(..))
-import Data.Typeable (Typeable)
 
 
 
@@ -37,7 +36,7 @@ type family JoinStyle (c1 :: * -> * -> *) (c2 :: * -> * -> *) where
 
 
 class Joinable c1 c2 where
-  join :: (Typeable k1, Typeable k2, Typeable k3, Typeable v1, Typeable v2, Typeable v3, Ord k1, Ord k2, Ord k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> (Join c1 c2) k3 v3
+  join :: (Ord k1, Ord k2, Ord k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> (Join c1 c2) k3 v3
 
 instance (JoinStyle c1 c2 ~ flag, Joinable' flag c1 c2 (Join c1 c2)) => Joinable c1 c2 where
   join = join' (Proxy :: Proxy flag)
@@ -51,7 +50,7 @@ instance Joinable Dummy1 Dummy2 where
 
 
 class Joinable' flag c1 c2 c3 where
-  join' :: (Typeable k1, Typeable k2, Typeable k3, Typeable v1, Typeable v2, Typeable v3, Ord k1, Ord k2, Ord k3) => Proxy flag -> Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> c3 k3 v3
+  join' :: (Ord k1, Ord k2, Ord k3) => Proxy flag -> Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> c3 k3 v3
 
 instance DataCube c1 => Joinable' JoinSelf c1 c1 c1 where
   join' _ = joinSelf

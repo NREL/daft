@@ -1,4 +1,4 @@
-module Data.Daft.DataCube.Sum (
+module Data.Daft.DataCube.Sum {-# DEPRECATED "Use Data.Daft.DataCube.Existential instead." #-} (
 -- * Types
   SumCube(..)
 , asTableCube
