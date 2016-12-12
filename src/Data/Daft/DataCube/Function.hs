@@ -16,6 +16,7 @@ import Control.DeepSeq (NFData(..))
 import Control.Monad (guard)
 import Data.Daft.DataCube (DataCube(..), Gregator(..), Joiner(..), Rekeyer(..))
 import Data.Maybe (mapMaybe)
+import Data.Typeable (Typeable)
 
 import qualified Data.Set as S (empty)
 import qualified GHC.Exts as L (IsList(..))
@@ -115,7 +116,7 @@ fromFunction :: (k -> Maybe v) -> FunctionCube k v
 fromFunction = FunctionCube
 
 
-joinAny :: (Ord k1, Ord k2, Ord k3, DataCube cube, DataCube cube') => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube' k2 v2 -> FunctionCube k3 v3
+joinAny :: (Typeable k1, Typeable k2, Typeable k3, Typeable v1, Typeable v2, Typeable v3, Ord k1, Ord k2, Ord k3, DataCube cube, DataCube cube') => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube' k2 v2 -> FunctionCube k3 v3
 joinAny Joiner{..} combiner cube1 cube2 =
   FunctionCube $ \k3 ->
     do

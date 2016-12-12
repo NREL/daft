@@ -45,6 +45,7 @@ import Data.Daft.TypeLevel (Intersection)
 import Data.Daft.Vinyl.TypeLevel (RDistinct, RJoin(rjoin), RUnion(runion))
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
+import Data.Typeable (Typeable)
 import Data.Vinyl.Core ((<+>))
 import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
@@ -56,7 +57,7 @@ import qualified Data.Daft.DataCube.Table as C (reify, fromTable, toKnownTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
-ε :: DataCube cube => FieldCube cube ks vs -> FieldCube ExistentialCube ks vs
+ε :: (Typeable cube, DataCube cube) => FieldCube cube ks vs -> FieldCube ExistentialCube ks vs
 ε = ExistentialCube
 
 
@@ -139,7 +140,7 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 ω = S.map rcast . C.knownKeys
 
 
-(⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
+(⋈) :: (Typeable kLeft, Typeable kRight, Typeable k, Typeable vLeft, Typeable vRight, Typeable v, Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
     => FieldCube cubeLeft kLeft vLeft -> FieldCube cubeRight kRight vRight -> FieldCube (Join cubeLeft cubeRight) k v
 (⋈) = C.join (C.Joiner rjoin rcast rcast) runion
 infixl 6 ⋈
