@@ -13,7 +13,6 @@ module Data.Daft.DataCube.Table (
 -- * Conversion
 , fromTable
 , fromTableM
-, toKnownTable
 , reify
 ) where
 
@@ -35,6 +34,12 @@ type TableCube = Map
 
 instance DataCube TableCube where
 
+  cmap = fmap
+
+  cempty = mempty
+
+  cappend = mappend
+
   evaluate = flip M.lookup
 
   evaluable = flip M.member
@@ -51,6 +56,8 @@ instance DataCube TableCube where
   selectRange (Just k0) Nothing   =                    snd . M.split k0
   selectRange Nothing (Just k1)   = fst . M.split k1
   selectRange (Just k0) (Just k1) = fst . M.split k1 . snd . M.split k0
+
+  toKnownTable combiner = L.fromList . map (uncurry combiner) . M.assocs
 
   selectKnownMinimum table =
     do
@@ -103,10 +110,6 @@ fromTableM keyer valuer =
   fmap M.fromList
     . mapM (liftA2 (,) . keyer <*> valuer)
     . L.toList
-
-
-toKnownTable :: (IsList as, a ~ Item as, Ord k) => (k -> v -> a) -> TableCube k v -> as
-toKnownTable combiner = L.fromList . map (uncurry combiner) . M.assocs
 
 
 reify :: DataCube a => (Ord k, IsList ks, k ~ Item ks) => ks -> a k v -> TableCube k v

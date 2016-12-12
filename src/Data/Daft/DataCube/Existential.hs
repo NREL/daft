@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 
@@ -9,8 +10,10 @@ module Data.Daft.DataCube.Existential (
 ) where
 
 
+import Control.Applicative ((<|>))
 import Data.Daft.DataCube (DataCube(..))
-import Data.Daft.DataCube.Function (joinAny)
+import Data.Daft.DataCube.Function (FunctionCube(..), joinAny)
+import Data.Daft.DataCube.Table (TableCube)
 import Data.Functor.Identity (Identity(..))
 import Data.Maybe (fromJust)
 import Data.Typeable (Typeable, gcast2, typeOf2)
@@ -20,6 +23,12 @@ data ExistentialCube ks vs = forall cube . (Typeable cube, DataCube cube) => Exi
 
 
 instance DataCube ExistentialCube where
+
+  cmap = fmap
+
+  cempty = mempty
+
+  cappend = mappend
 
   evaluate (ExistentialCube c) = evaluate c
 
@@ -51,3 +60,17 @@ instance DataCube ExistentialCube where
 
 cast2 :: forall c c' k v . (Typeable c, Typeable c') => c k v -> Maybe (c' k v)
 cast2 = fmap runIdentity . gcast2 . Identity
+
+
+instance Functor (ExistentialCube k) where
+
+  fmap f (ExistentialCube c) = ExistentialCube $ cmap f c
+
+instance Ord k => Monoid (ExistentialCube k v) where
+
+  mempty = ExistentialCube (cempty :: TableCube k v)
+
+  mappend (ExistentialCube c1) (ExistentialCube c2) =
+    if typeOf2 c1 == typeOf2 c2
+      then ExistentialCube $ cappend c1 $ fromJust $ cast2 c2
+      else ExistentialCube $ FunctionCube $ \k -> evaluate c1 k <|> evaluate c2 k

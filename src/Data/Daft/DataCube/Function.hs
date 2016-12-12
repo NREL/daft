@@ -26,6 +26,12 @@ newtype FunctionCube k v = FunctionCube {function :: k -> Maybe v}
 
 instance DataCube FunctionCube where
 
+  cmap = fmap
+
+  cempty = mempty
+
+  cappend = mappend
+
   evaluate = function
 
   knownKeys = const S.empty

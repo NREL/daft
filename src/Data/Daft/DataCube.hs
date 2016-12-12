@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeFamilies              #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 
 module Data.Daft.DataCube (
@@ -10,6 +11,7 @@ module Data.Daft.DataCube (
 ) where
 
 
+import Control.Arrow ((&&&))
 import Data.Maybe (isJust, mapMaybe)
 import Data.Set (Set)
 import GHC.Exts (IsList(Item))
@@ -19,6 +21,12 @@ import qualified GHC.Exts as L (IsList(..))
 
 
 class DataCube (cube :: * -> * -> *) where
+
+  cmap :: (v -> v') -> cube k v -> cube k v'
+
+  cempty :: Ord k => cube k v
+
+  cappend :: Ord k => cube k v -> cube k v -> cube k v
 
   evaluate :: Ord k => cube k v -> k -> Maybe v
 
@@ -48,6 +56,9 @@ class DataCube (cube :: * -> * -> *) where
 
   knownEmpty :: cube k v -> Bool
   knownEmpty = S.null . knownKeys
+
+  toKnownTable :: (IsList as, a ~ Item as, Ord k) => (k -> v -> a) -> cube k v -> as
+  toKnownTable f = uncurry (toTable f) . (knownKeys &&& id)
 
   selectKnownMinimum :: Ord k => cube k v -> Maybe (k, v)
 

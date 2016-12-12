@@ -55,6 +55,12 @@ instance (NFData k, NFData v) => NFData (SumCube k v) where
 
 instance DataCube SumCube where
 
+  cmap = fmap
+
+  cempty = mempty
+
+  cappend = mappend
+
   evaluate (TableSumCube    c) = evaluate c
   evaluate (FunctionSumCube c) = evaluate c
 

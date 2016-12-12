@@ -57,7 +57,7 @@ import Data.Vinyl.TypeLevel (type (++))
 
 import qualified Data.Daft.DataCube as C (DataCube(..), Gregator(..), Joiner(..))
 import qualified Data.Daft.DataCube.Join as C (antijoin, join, semijoin)
-import qualified Data.Daft.DataCube.Table as C (reify, fromTable, toKnownTable)
+import qualified Data.Daft.DataCube.Table as C (reify, fromTable)
 import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
 
 
@@ -99,7 +99,7 @@ toRecords :: (Ord (FieldRec ks), RUnion ks vs as, DataCube cube) => [FieldRec ks
 toRecords = C.toTable runion
 
 
-toKnownRecords :: (Ord (FieldRec ks), RUnion ks vs as) => ks *↝ vs -> [FieldRec as]
+toKnownRecords :: (Ord (FieldRec ks), RUnion ks vs as) => ks ↝ vs -> [FieldRec as]
 toKnownRecords = C.toKnownTable runion
 
 

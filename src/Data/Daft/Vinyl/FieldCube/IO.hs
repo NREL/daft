@@ -19,9 +19,10 @@ module Data.Daft.Vinyl.FieldCube.IO (
 
 
 import Control.Monad.Except (MonadError, MonadIO, throwError)
+import Data.Daft.DataCube (DataCube)
 import Data.Daft.Source (DataSource(..))
 import Data.Daft.TypeLevel (Union)
-import Data.Daft.Vinyl.FieldCube (type (*↝))
+import Data.Daft.Vinyl.FieldCube (FieldCube, type (*↝))
 import Data.Daft.Vinyl.FieldRec (Labeled)
 import Data.Daft.Vinyl.FieldRec.Instances ()
 import Data.Daft.Vinyl.FieldRec.IO (ReadFieldRec, ShowFieldRec, readFieldRecs, readFieldRecFile, readFieldRecSource, showFieldRecs, writeFieldRecFile, writeFieldRecSource)
@@ -35,7 +36,8 @@ import Data.Vinyl.Derived (FieldRec)
 import Data.Vinyl.Lens (type (⊆), rcast)
 import Data.Vinyl.TypeLevel (type (++))
 
-import qualified Data.Daft.DataCube.Table as C (fromTable, toKnownTable)
+import qualified Data.Daft.DataCube as C (DataCube(..))
+import qualified Data.Daft.DataCube.Table as C (fromTable)
 
 
 readFieldCube :: forall ks vs s e m . (ks ⊆ Union ks vs, vs ⊆ Union ks vs, Ord (FieldRec ks), Eq s, IsString s, ToString s, IsString e, MonadError e m, Labeled (FieldRec (Union ks vs)), ReadFieldRec (Union ks vs)) => [[s]] -> m (ks *↝ vs)
@@ -63,13 +65,13 @@ readFieldCubeSource' BuiltinData{..} = throwError "Cannot read records from buil
 readFieldCubeSource' NoData          = return empty
 
 
-showFieldCube :: forall ks vs . (Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs)) => ks *↝ vs -> [[String]]
+showFieldCube :: forall c ks vs . (DataCube c, Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs)) => (FieldCube c) ks vs -> [[String]]
 showFieldCube = showFieldRecs . C.toKnownTable ((<+>) :: FieldRec ks -> FieldRec vs -> FieldRec (ks ++ vs))
 
 
-writeFieldCubeFile :: forall ks vs e m . (Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => FilePath -> ks *↝ vs -> m ()
+writeFieldCubeFile :: forall c ks vs e m . (DataCube c, Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => FilePath -> (FieldCube c) ks vs -> m ()
 writeFieldCubeFile = (. C.toKnownTable ((<+>) :: FieldRec ks -> FieldRec vs -> FieldRec (ks ++ vs))) . writeFieldRecFile
 
 
-writeFieldCubeSource :: forall ks vs e m a . (Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => DataSource a -> ks *↝ vs -> m (Maybe String)
+writeFieldCubeSource :: forall c ks vs e m a . (DataCube c, Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => DataSource a -> (FieldCube c) ks vs -> m (Maybe String)
 writeFieldCubeSource = (. C.toKnownTable ((<+>) :: FieldRec ks -> FieldRec vs -> FieldRec (ks ++ vs))) . writeFieldRecSource
