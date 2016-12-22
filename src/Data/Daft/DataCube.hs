@@ -1,5 +1,6 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 
 module Data.Daft.DataCube (
@@ -13,24 +14,22 @@ module Data.Daft.DataCube (
 
 import Control.Arrow ((&&&))
 import Data.Maybe (isJust, mapMaybe)
-import Data.Set (Set)
-import GHC.Exts (IsList(Item))
-
-import qualified Data.Set as S (null, size)
-import qualified GHC.Exts as L (IsList(..))
+import GHC.Exts (Constraint)
 
 
-class DataCube (cube :: * -> * -> *) where
+class DataCube cube k where
+
+  type Key k :: Constraint
 
   cmap :: (v -> v') -> cube k v -> cube k v'
 
-  cempty :: Ord k => cube k v
+  cempty :: Key k => cube k v
 
-  cappend :: Ord k => cube k v -> cube k v -> cube k v
+  cappend :: Key k => cube k v -> cube k v -> cube k v
 
-  evaluate :: Ord k => cube k v -> k -> Maybe v
+  evaluate :: Key k => cube k v -> k -> Maybe v
 
-  evaluable :: Ord k => cube k v -> k -> Bool
+  evaluable :: Key k => cube k v -> k -> Bool
   evaluable = (isJust .) . evaluate
 
   select :: (v -> Bool) -> cube k v -> cube k v
@@ -43,22 +42,22 @@ class DataCube (cube :: * -> * -> *) where
 
   selectRange :: Ord k => Maybe k -> Maybe k -> cube k v -> cube k v
 
-  toTable :: (IsList ks, k ~ Item ks, IsList as, a ~ Item as, Ord k) => (k -> v -> a) -> ks -> cube k v -> as
-  toTable combiner ks cube = L.fromList . mapMaybe (evaluate $ projectWithKey combiner cube) $ L.toList ks
+  toList :: Key k => (k -> v -> a) -> [k] -> cube k v -> [a]
+  toList combiner ks cube = mapMaybe (evaluate $ projectWithKey combiner cube) ks
 
-  knownKeys :: cube k v -> Set k
+  knownKeys :: cube k v -> [k]
 
-  withKnown :: cube k v -> (Set k -> cube k v -> r) -> r
+  withKnown :: cube k v -> ([k] -> cube k v -> r) -> r
   withKnown cube f = f (knownKeys cube) cube
 
   knownSize :: cube k v -> Int
-  knownSize = S.size . knownKeys
+  knownSize = length . knownKeys
 
   knownEmpty :: cube k v -> Bool
-  knownEmpty = S.null . knownKeys
+  knownEmpty = null . knownKeys
 
-  toKnownTable :: (IsList as, a ~ Item as, Ord k) => (k -> v -> a) -> cube k v -> as
-  toKnownTable f = uncurry (toTable f) . (knownKeys &&& id)
+  toKnownList :: Key k => (k -> v -> a) -> cube k v -> [a]
+  toKnownList f = uncurry (toList f) . (knownKeys &&& id)
 
   selectKnownMinimum :: Ord k => cube k v -> Maybe (k, v)
 
@@ -69,21 +68,21 @@ class DataCube (cube :: * -> * -> *) where
 
   projectWithKey :: (k -> v -> v') -> cube k v -> cube k v'
 
-  projectKnownKeys :: (IsList ks', k' ~ Item ks') => (k -> k') -> cube k v -> ks'
+  projectKnownKeys :: (k -> k') -> cube k v -> [k']
 
-  rekey :: Ord k' => Rekeyer k k' -> cube k v -> cube k' v
+  rekey :: Key k' => Rekeyer k k' -> cube k v -> cube k' v
 
-  aggregate :: Ord k' => Gregator k k' -> ([v] -> v') -> cube k v -> cube k' v'
+  aggregate :: Key k' => Gregator k k' -> ([v] -> v') -> cube k v -> cube k' v'
   aggregate = (. const) . aggregateWithKey
 
-  aggregateWithKey :: Ord k' => Gregator k k' -> (k' -> [v] -> v') -> cube k v -> cube k' v'
+  aggregateWithKey :: Key k' => Gregator k k' -> (k' -> [v] -> v') -> cube k v -> cube k' v'
 
-  disaggregate :: Ord k' => Gregator k' k -> (v -> v') -> cube k v -> cube k' v'
+  disaggregate :: Key k' => Gregator k' k -> (v -> v') -> cube k v -> cube k' v'
   disaggregate = (. const) . disaggregateWithKey
   
-  disaggregateWithKey :: Ord k' => Gregator k' k -> (k' -> v -> v') -> cube k v -> cube k' v'
+  disaggregateWithKey :: Key k' => Gregator k' k -> (k' -> v -> v') -> cube k v -> cube k' v'
 
-  joinSelf :: (Ord k1, Ord k2, Ord k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube k2 v2 -> cube k3 v3
+  joinSelf :: (Key k1, Key k2, Key k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube k2 v2 -> cube k3 v3
 
 
 data Rekeyer a b =

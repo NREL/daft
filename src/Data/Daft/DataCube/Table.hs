@@ -23,16 +23,17 @@ import Control.Monad (guard)
 import Data.Daft.DataCube (DataCube(..), Gregator(..), Joiner(..), Rekeyer(..))
 import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes)
-import GHC.Exts (IsList(Item))
 
 import qualified Data.Map.Strict as M (assocs, filterWithKey, findMin, findMax, fromList, fromListWith, keys, keysSet, lookup, mapKeysWith, mapWithKey, member, null, split, size)
-import qualified GHC.Exts as L (IsList(..))
+import qualified Data.Set as S (toList)
 
 
 type TableCube = Map
 
 
-instance DataCube TableCube where
+instance DataCube TableCube k where
+
+  type Key k = Ord k
 
   cmap = fmap
 
@@ -44,7 +45,7 @@ instance DataCube TableCube where
 
   evaluable = flip M.member
 
-  knownKeys = M.keysSet
+  knownKeys = S.toList . M.keysSet
 
   knownSize = M.size
 
@@ -57,7 +58,7 @@ instance DataCube TableCube where
   selectRange Nothing (Just k1)   = fst . M.split k1
   selectRange (Just k0) (Just k1) = fst . M.split k1 . snd . M.split k0
 
-  toKnownTable combiner = L.fromList . map (uncurry combiner) . M.assocs
+  toKnownList combiner = map (uncurry combiner) . M.assocs
 
   selectKnownMinimum table =
     do
@@ -75,7 +76,7 @@ instance DataCube TableCube where
 
   projectWithKey = M.mapWithKey
 
-  projectKnownKeys = (L.fromList .) . (. M.keys) . fmap
+  projectKnownKeys = (. M.keys) . fmap
 
   rekey Rekeyer{..} = M.mapKeysWith (const id) rekeyer
 
@@ -101,23 +102,22 @@ instance DataCube TableCube where
       ]
 
 
-fromTable :: (IsList as, a ~ Item as, Ord k) => (a -> k) -> (a -> v) -> as -> TableCube k v
-fromTable keyer valuer = M.fromList . fmap (keyer &&& valuer) . L.toList
+fromTable :: Ord k => (a -> k) -> (a -> v) -> []a -> TableCube k v
+fromTable keyer valuer = M.fromList . fmap (keyer &&& valuer)
 
 
-fromTableM :: (Monad m, IsList as, a ~ Item as, Ord k) => (a -> m k) -> (a -> m v) -> as -> m (TableCube k v)
+fromTableM :: (Monad m, Ord k) => (a -> m k) -> (a -> m v) -> [a] -> m (TableCube k v)
 fromTableM keyer valuer =
   fmap M.fromList
     . mapM (liftA2 (,) . keyer <*> valuer)
-    . L.toList
 
 
-reify :: DataCube a => (Ord k, IsList ks, k ~ Item ks) => ks -> a k v -> TableCube k v
+reify :: DataCube a k => (Ord k) => [k] -> a k v -> TableCube k v
 reify ks cube =
   M.fromList
     $ catMaybes
     [
       (k, ) <$> cube `evaluate` k
     |
-      k <- L.toList ks
+      k <- ks
     ]

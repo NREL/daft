@@ -1,4 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
@@ -19,10 +21,12 @@ import Data.Maybe (fromJust)
 import Data.Typeable (Typeable, gcast2, typeOf2)
 
 
-data ExistentialCube ks vs = forall cube . (Typeable cube, DataCube cube) => ExistentialCube (cube ks vs)
+data ExistentialCube ks vs = forall cube . (Typeable cube, DataCube cube ks) => ExistentialCube (cube ks vs)
 
 
-instance DataCube ExistentialCube where
+instance DataCube ExistentialCube k where
+
+--type Key k
 
   cmap = fmap
 

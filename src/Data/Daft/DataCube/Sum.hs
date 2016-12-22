@@ -1,3 +1,7 @@
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
+
 module Data.Daft.DataCube.Sum {-# DEPRECATED "Use Data.Daft.DataCube.Existential instead." #-} (
 -- * Types
   SumCube(..)
@@ -53,7 +57,7 @@ instance (NFData k, NFData v) => NFData (SumCube k v) where
 
   rnf (FunctionSumCube cube) = rnf cube
 
-instance DataCube SumCube where
+instance DataCube SumCube k where
 
   cmap = fmap
 

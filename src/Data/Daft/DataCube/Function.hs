@@ -1,4 +1,7 @@
-{-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 
 module Data.Daft.DataCube.Function (
@@ -17,14 +20,16 @@ import Control.Monad (guard)
 import Data.Daft.DataCube (DataCube(..), Gregator(..), Joiner(..), Rekeyer(..))
 import Data.Maybe (mapMaybe)
 
-import qualified Data.Set as S (empty)
-import qualified GHC.Exts as L (IsList(..))
+
+class Unconstrained k
 
 
 newtype FunctionCube k v = FunctionCube {function :: k -> Maybe v}
 
 
-instance DataCube FunctionCube where
+instance DataCube FunctionCube k where
+
+  type Key k = Unconstrained k
 
   cmap = fmap
 
@@ -34,7 +39,7 @@ instance DataCube FunctionCube where
 
   evaluate = function
 
-  knownKeys = const S.empty
+  knownKeys = const []
 
   knownSize = const 0
 
@@ -74,7 +79,7 @@ instance DataCube FunctionCube where
 
   projectWithKey projector FunctionCube{..} = FunctionCube $ liftA2 fmap projector function
 
-  projectKnownKeys _         FunctionCube{..} = L.fromList []
+  projectKnownKeys _         FunctionCube{..} = []
 
   rekey Rekeyer{..} FunctionCube{..} = FunctionCube $ function . unrekeyer
 
@@ -98,7 +103,7 @@ instance Functor (FunctionCube k) where
   fmap f (FunctionCube g) = FunctionCube $ fmap f . g
 
 
-instance Ord k => Applicative (FunctionCube k) where
+instance Applicative (FunctionCube k) where
   pure = FunctionCube . const . return
   FunctionCube g <*> FunctionCube h =
     FunctionCube $ \k ->
@@ -108,7 +113,7 @@ instance Ord k => Applicative (FunctionCube k) where
         return $ f v
 
 
-instance Ord k => Monoid (FunctionCube k v) where
+instance Monoid (FunctionCube k v) where
   mempty = FunctionCube $ const Nothing
   mappend (FunctionCube f) (FunctionCube g) = FunctionCube $ \k -> f k <|> g k
 
@@ -121,7 +126,7 @@ fromFunction :: (k -> Maybe v) -> FunctionCube k v
 fromFunction = FunctionCube
 
 
-joinAny :: (Ord k1, Ord k2, Ord k3, DataCube cube, DataCube cube') => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube' k2 v2 -> FunctionCube k3 v3
+joinAny :: (DataCube cube k1, DataCube cube' k2, Key k1, Key k2) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube' k2 v2 -> FunctionCube k3 v3
 joinAny Joiner{..} combiner cube1 cube2 =
   FunctionCube $ \k3 ->
     do
