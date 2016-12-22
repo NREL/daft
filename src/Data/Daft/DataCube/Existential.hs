@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
+{-# LANGUAGE UndecidableInstances      #-}
 
 
 module Data.Daft.DataCube.Existential (
@@ -19,10 +20,12 @@ import Data.Maybe (fromJust)
 import Data.Typeable (Typeable, gcast2, typeOf2)
 
 
-data ExistentialCube ks vs = forall cube . (Typeable cube, DataCube cube) => ExistentialCube (cube ks vs)
+data ExistentialCube k v = forall cube . (Typeable cube, DataCube cube) => ExistentialCube (cube k v)
 
 
 instance DataCube ExistentialCube where
+
+  type Key ExistentialCube k = ?????? -- FIXME: Can we put the key of the underlying cube here?
 
   cmap = fmap
 
@@ -66,7 +69,7 @@ instance Functor (ExistentialCube k) where
 
   fmap f (ExistentialCube c) = ExistentialCube $ cmap f c
 
-instance Ord k => Monoid (ExistentialCube k v) where
+instance Key ExistentialCube k => Monoid (ExistentialCube k v) where
 
   mempty = ExistentialCube (cempty :: TableCube k v)
 
