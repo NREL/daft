@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies      #-}
 
@@ -16,9 +17,11 @@ import Data.Maybe (isJust, mapMaybe)
 import GHC.Exts (Constraint)
 
 
-class DataCube (cube :: * -> * -> *) where
+class Foldable (Keys cube) => DataCube (cube :: * -> * -> *) where
 
   type Key cube :: * -> Constraint
+
+  type Keys cube :: * -> *
 
   cmap :: (v -> v') -> cube k v -> cube k v'
 
@@ -41,19 +44,17 @@ class DataCube (cube :: * -> * -> *) where
 
   selectRange :: Ord k => Maybe k -> Maybe k -> cube k v -> cube k v
 
-  toTable :: Key cube k => (k -> v -> a) -> [k] -> cube k v -> [a]
-  toTable combiner ks cube = mapMaybe (evaluate $ projectWithKey combiner cube) ks
+  toTable :: Key cube k => (k -> v -> a) -> Keys cube k -> cube k v -> [a]
+  toTable combiner ks cube = mapMaybe (evaluate $ projectWithKey combiner cube) $ foldr (:) [] ks
 
-  knownKeys :: cube k v -> [k]
+  knownKeys :: cube k v -> Keys cube k
 
-  withKnown :: cube k v -> ([k] -> cube k v -> r) -> r
+  withKnown :: cube k v -> (Keys cube k -> cube k v -> r) -> r
   withKnown cube f = f (knownKeys cube) cube
 
   knownSize :: cube k v -> Int
-  knownSize = length . knownKeys
 
   knownEmpty :: cube k v -> Bool
-  knownEmpty = null . knownKeys
 
   toKnownTable :: Key cube k => (k -> v -> a) -> cube k v -> [a]
   toKnownTable f = uncurry (toTable f) . (knownKeys &&& id)
@@ -67,7 +68,7 @@ class DataCube (cube :: * -> * -> *) where
 
   projectWithKey :: (k -> v -> v') -> cube k v -> cube k v'
 
-  projectKnownKeys :: (k -> k') -> cube k v -> [k']
+  projectKnownKeys :: Key cube k' => (k -> k') -> cube k v -> Keys cube k'
 
   rekey :: Key cube k' => Rekeyer k k' -> cube k v -> cube k' v
 

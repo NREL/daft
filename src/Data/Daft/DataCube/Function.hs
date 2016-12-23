@@ -18,6 +18,7 @@ import Control.DeepSeq (NFData(..))
 import Control.Monad (guard)
 import Data.Daft.DataCube (DataCube(..), Gregator(..), Joiner(..), Rekeyer(..))
 import Data.Maybe (mapMaybe)
+import Data.Set (Set, empty)
 
 
 newtype FunctionCube k v = FunctionCube {function :: k -> Maybe v}
@@ -27,6 +28,8 @@ instance DataCube FunctionCube where
  
   type Key FunctionCube = Ord -- FIXME: In general, this could be unconstrained, but 'Ord' makes it compatible with 'ExistentialCube'.
 
+  type Keys FunctionCube = Set
+
   cmap = fmap
 
   cempty = mempty
@@ -35,7 +38,7 @@ instance DataCube FunctionCube where
 
   evaluate = function
 
-  knownKeys = const []
+  knownKeys = const empty
 
   knownSize = const 0
 
@@ -75,7 +78,7 @@ instance DataCube FunctionCube where
 
   projectWithKey projector FunctionCube{..} = FunctionCube $ liftA2 fmap projector function
 
-  projectKnownKeys _         FunctionCube{..} = []
+  projectKnownKeys _         FunctionCube{..} = empty
 
   rekey Rekeyer{..} FunctionCube{..} = FunctionCube $ function . unrekeyer
 

@@ -62,7 +62,7 @@ import qualified Data.Daft.DataCube.Table as C (reify, fromTable)
 import qualified Data.Set as S (fromDistinctAscList, toAscList)
 
 
-ε :: (Typeable cube, DataCube cube, Key cube ~ Ord) => FieldCube cube ks vs -> ks ↝ vs -- FIXME: Could the 'Ord' constraint be dropped?
+ε :: (Typeable cube, DataCube cube, Key cube ~ Ord, Keys cube ~ Set) => FieldCube cube ks vs -> ks ↝ vs -- FIXME: Could the 'Ord' constraint be dropped?
 ε = ExistentialCube
 
 
@@ -96,7 +96,7 @@ fromRecords :: (ks ⊆ as, vs ⊆ as, RUnion ks vs as, Ord (FieldRec ks)) => [Fi
 fromRecords = C.fromTable rcast rcast
 
 
-toRecords :: (Key cube (FieldRec ks), RUnion ks vs as, DataCube cube) => [FieldRec ks] -> FieldCube cube ks vs -> [FieldRec as]
+toRecords :: (Key cube (FieldRec ks), RUnion ks vs as, DataCube cube) => Keys cube (FieldRec ks) -> FieldCube cube ks vs -> [FieldRec as]
 toRecords = C.toTable runion
 
 
@@ -147,8 +147,8 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
     }
 
 
-ω :: (ks' ⊆ ks, Key cube (FieldRec ks'), DataCube cube) => FieldCube cube ks vs -> [FieldRec ks']
-ω = map rcast . C.knownKeys
+ω :: (ks' ⊆ ks, Key cube (FieldRec ks'), DataCube cube) => FieldCube cube ks vs -> Keys cube (FieldRec ks')
+ω = C.projectKnownKeys rcast
 
 
 (⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Key cubeLeft (FieldRec kLeft), Key cubeRight (FieldRec kRight), Key (Join cubeLeft cubeRight) (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.

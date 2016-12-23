@@ -15,6 +15,7 @@ import Data.Daft.DataCube (DataCube(..))
 import Data.Daft.DataCube.Function (FunctionCube(..), joinAny)
 import Data.Daft.DataCube.Table (TableCube)
 import Data.Map.Strict (empty, mergeWithKey, union)
+import Data.Set (Set)
 
 
 -- FIXME: Is there a way to make this type extensible, maybe using polymorphic variants?
@@ -60,6 +61,8 @@ instance DataCube SumCube where
 
   type Key SumCube = Ord
 
+  type Keys SumCube = Set
+
   cmap = fmap
 
   cempty = mempty
@@ -78,6 +81,11 @@ instance DataCube SumCube where
   knownKeys (TableSumCube    c) = knownKeys c
   knownKeys (FunctionSumCube c) = knownKeys c
 
+  knownSize (TableSumCube    c) = knownSize c
+  knownSize (FunctionSumCube c) = knownSize c
+
+  knownEmpty (TableSumCube    c) = knownEmpty c
+  knownEmpty (FunctionSumCube c) = knownEmpty c
   selectKnownMinimum (TableSumCube    c) = selectKnownMinimum c
   selectKnownMinimum (FunctionSumCube c) = selectKnownMinimum c
 

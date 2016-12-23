@@ -23,9 +23,10 @@ import Control.Monad (guard)
 import Data.Daft.DataCube (DataCube(..), Gregator(..), Joiner(..), Rekeyer(..))
 import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes)
+import Data.Set (Set)
 
 import qualified Data.Map.Strict as M (assocs, filterWithKey, findMin, findMax, fromList, fromListWith, keys, keysSet, lookup, mapKeysWith, mapWithKey, member, null, split, size)
-import qualified Data.Set as S (toList)
+import qualified Data.Set as S (fromList)
 
 
 type TableCube = Map
@@ -34,6 +35,8 @@ type TableCube = Map
 instance DataCube TableCube where
 
   type Key TableCube = Ord
+
+  type Keys TableCube = Set
 
   cmap = fmap
 
@@ -45,7 +48,7 @@ instance DataCube TableCube where
 
   evaluable = flip M.member
 
-  knownKeys = S.toList . M.keysSet
+  knownKeys = M.keysSet
 
   knownSize = M.size
 
@@ -76,7 +79,7 @@ instance DataCube TableCube where
 
   projectWithKey = M.mapWithKey
 
-  projectKnownKeys = (. M.keys) . fmap
+  projectKnownKeys = (S.fromList .) . (. M.keys) . fmap
 
   rekey Rekeyer{..} = M.mapKeysWith (const id) rekeyer
 
