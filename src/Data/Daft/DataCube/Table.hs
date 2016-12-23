@@ -26,7 +26,7 @@ import Data.Maybe (catMaybes)
 import Data.Set (Set)
 
 import qualified Data.Map.Strict as M (assocs, filterWithKey, findMin, findMax, fromList, fromListWith, keys, keysSet, lookup, mapKeysWith, mapWithKey, member, null, split, size)
-import qualified Data.Set as S (fromList)
+import qualified Data.Set as S (fromList, toList)
 
 
 type TableCube = Map
@@ -115,12 +115,12 @@ fromTableM keyer valuer =
     . mapM (liftA2 (,) . keyer <*> valuer)
 
 
-reify :: (DataCube a, Key a k, Ord k) => [k] -> a k v -> TableCube k v
+reify :: (DataCube a, Key a k, Ord k) => Set k -> a k v -> TableCube k v
 reify ks cube =
   M.fromList
     $ catMaybes
     [
       (k, ) <$> cube `evaluate` k
     |
-      k <- ks
+      k <- S.toList ks
     ]

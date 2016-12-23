@@ -120,7 +120,7 @@ toKnownRecords = C.toKnownTable runion
 π = C.projectWithKey
 
 
-ρ :: (DataCube cube, Key cube (FieldRec ks), Ord (FieldRec ks)) => [FieldRec ks] -> FieldCube cube ks vs -> ks *↝ vs
+ρ :: (DataCube cube, Key cube (FieldRec ks), Ord (FieldRec ks)) => Set (FieldRec ks) -> FieldCube cube ks vs -> ks *↝ vs
 ρ = C.reify
 
 
