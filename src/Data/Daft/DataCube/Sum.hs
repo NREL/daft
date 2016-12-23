@@ -58,7 +58,7 @@ instance (NFData k, NFData v) => NFData (SumCube k v) where
 
 instance DataCube SumCube where
 
-  type Key SumCube k = Ord k
+  type Key SumCube = Ord
 
   cmap = fmap
 

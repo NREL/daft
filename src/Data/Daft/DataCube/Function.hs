@@ -23,14 +23,9 @@ import Data.Maybe (mapMaybe)
 newtype FunctionCube k v = FunctionCube {function :: k -> Maybe v}
 
 
-class Unconstrained k
-
-instance Unconstrained k
-
-
 instance DataCube FunctionCube where
-
-  type Key FunctionCube k = Unconstrained k
+ 
+  type Key FunctionCube = Ord -- FIXME: In general, this could be unconstrained, but 'Ord' makes it compatible with 'ExistentialCube'.
 
   cmap = fmap
 

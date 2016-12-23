@@ -20,12 +20,12 @@ import Data.Maybe (fromJust)
 import Data.Typeable (Typeable, gcast2, typeOf2)
 
 
-data ExistentialCube k v = forall cube . (Typeable cube, DataCube cube) => ExistentialCube (cube k v)
+data ExistentialCube k v = forall cube . (Typeable cube, DataCube cube, Key cube k ~ Ord k) => ExistentialCube (cube k v) -- FIXME: TInstead of requiring 'Ord', could the constraint be a parameter?
 
 
 instance DataCube ExistentialCube where
 
-  type Key ExistentialCube k = ?????? -- FIXME: Can we put the key of the underlying cube here?
+  type Key ExistentialCube = Ord
 
   cmap = fmap
 

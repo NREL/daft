@@ -38,7 +38,6 @@ import Data.Daft.Vinyl.FieldCube.IO (readFieldCube, showFieldCube)
 import Data.Daft.Vinyl.FieldRec ((<+>), (=:), (<:))
 import Data.List.Util.Listable (toTabbeds)
 import Data.Maybe (isJust)
-import Data.Set (Set, fromList)
 import Data.Vinyl.Derived (FieldRec, SField(..))
 
 import qualified Data.Aeson as A (encode)
@@ -109,9 +108,9 @@ cities =
 
 
 -- Some areas of interest.
-interest :: Set (FieldRec '[StateUSPS, CityName])
+interest :: [FieldRec '[StateUSPS, CityName]]
 interest =
-  fromList [
+  [
     sStateUSPS =: "CA" <+> sCityName =: "Los Angeles"
   , sStateUSPS =: "CA" <+> sCityName =: "San Francisco"
   , sStateUSPS =: "CT" <+> sCityName =: "New Haven"

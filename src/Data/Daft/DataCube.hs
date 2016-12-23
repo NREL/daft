@@ -18,7 +18,7 @@ import GHC.Exts (Constraint)
 
 class DataCube (cube :: * -> * -> *) where
 
-  type Key cube k :: Constraint
+  type Key cube :: * -> Constraint
 
   cmap :: (v -> v') -> cube k v -> cube k v'
 

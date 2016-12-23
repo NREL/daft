@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 
 
@@ -58,10 +59,10 @@ import Data.Vinyl.TypeLevel (type (++))
 import qualified Data.Daft.DataCube as C (DataCube(..), Gregator(..), Joiner(..))
 import qualified Data.Daft.DataCube.Join as C (antijoin, join, semijoin)
 import qualified Data.Daft.DataCube.Table as C (reify, fromTable)
-import qualified Data.Set as S (fromDistinctAscList, map, toAscList)
+import qualified Data.Set as S (fromDistinctAscList, toAscList)
 
 
-ε :: (Typeable cube, DataCube cube) => FieldCube cube ks vs -> ks ↝ vs
+ε :: (Typeable cube, DataCube cube, Key cube ~ Ord) => FieldCube cube ks vs -> ks ↝ vs -- FIXME: Could the 'Ord' constraint be dropped?
 ε = ExistentialCube
 
 
@@ -95,7 +96,7 @@ fromRecords :: (ks ⊆ as, vs ⊆ as, RUnion ks vs as, Ord (FieldRec ks)) => [Fi
 fromRecords = C.fromTable rcast rcast
 
 
-toRecords :: (Ord (FieldRec ks), RUnion ks vs as, DataCube cube) => [FieldRec ks] -> FieldCube cube ks vs -> [FieldRec as]
+toRecords :: (Key cube (FieldRec ks), RUnion ks vs as, DataCube cube) => [FieldRec ks] -> FieldCube cube ks vs -> [FieldRec as]
 toRecords = C.toTable runion
 
 
@@ -107,7 +108,7 @@ toKnownRecords = C.toKnownTable runion
 τ = rcast
 
 
-(!) :: (Ord (FieldRec ks), DataCube cube) => FieldCube cube ks vs -> FieldRec ks -> FieldRec vs
+(!) :: (Key cube (FieldRec ks), DataCube cube) => FieldCube cube ks vs -> FieldRec ks -> FieldRec vs
 (!) = (fromMaybe (error "FieldCube: key not found.") .) . C.evaluate
 
 
@@ -119,14 +120,14 @@ toKnownRecords = C.toKnownTable runion
 π = C.projectWithKey
 
 
-ρ :: (DataCube cube, Ord (FieldRec ks)) => Set (FieldRec ks) -> FieldCube cube ks vs -> ks *↝ vs
+ρ :: (DataCube cube, Key cube (FieldRec ks), Ord (FieldRec ks)) => [FieldRec ks] -> FieldCube cube ks vs -> ks *↝ vs
 ρ = C.reify
 
 
 type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 
 
-κ :: (ks0 ⊆ ks, ks ⊆ (ks' ++ ks0), ks' ⊆ ks, Ord (FieldRec ks), Ord (FieldRec ks'), DataCube cube) => Set (FieldRec ks0) -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube cube ks vs -> FieldCube cube ks' vs' -- FIXME: Instead of subset, use sum.
+κ :: (ks0 ⊆ ks, ks ⊆ (ks' ++ ks0), ks' ⊆ ks, Key cube (FieldRec ks), Key cube (FieldRec ks'), DataCube cube) => Set (FieldRec ks0) -> (FieldRec ks' -> [FieldRec vs] -> FieldRec vs') -> FieldCube cube ks vs -> FieldCube cube ks' vs' -- FIXME: Instead of subset, use sum.
 κ keys =
   C.aggregateWithKey
     C.Gregator
@@ -136,7 +137,7 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
     }
 
 
-δ :: (ks0 ⊆ ks', ks' ⊆ (ks ++ ks0), ks ⊆ ks', Ord (FieldRec ks), Ord (FieldRec ks'), DataCube cube) => Set (FieldRec ks0) -> (FieldRec ks' -> FieldRec vs -> FieldRec vs') -> FieldCube cube ks vs -> FieldCube cube ks' vs' -- FIXME: Instead of subset, use sum.
+δ :: (ks0 ⊆ ks', ks' ⊆ (ks ++ ks0), ks ⊆ ks', Key cube (FieldRec ks), Key cube (FieldRec ks'), DataCube cube) => Set (FieldRec ks0) -> (FieldRec ks' -> FieldRec vs -> FieldRec vs') -> FieldCube cube ks vs -> FieldCube cube ks' vs' -- FIXME: Instead of subset, use sum.
 δ keys =
   C.disaggregateWithKey
     C.Gregator
@@ -146,23 +147,23 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
     }
 
 
-ω :: (ks' ⊆ ks, Ord (FieldRec ks'), DataCube cube) => FieldCube cube ks vs -> Set (FieldRec ks')
-ω = S.map rcast . C.knownKeys
+ω :: (ks' ⊆ ks, Key cube (FieldRec ks'), DataCube cube) => FieldCube cube ks vs -> [FieldRec ks']
+ω = map rcast . C.knownKeys
 
 
-(⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Ord (FieldRec kLeft), Ord (FieldRec kRight), Ord (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
+(⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Key cubeLeft (FieldRec kLeft), Key cubeRight (FieldRec kRight), Key (Join cubeLeft cubeRight) (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
     => FieldCube cubeLeft kLeft vLeft -> FieldCube cubeRight kRight vRight -> FieldCube (Join cubeLeft cubeRight) k v
 (⋈) = C.join (C.Joiner rjoin rcast rcast) runion
 infixl 6 ⋈
 
 
-(⋉) :: (Ord (FieldRec kRight), kRight ⊆ kLeft, DataCube cube)
+(⋉) :: (Key cube (FieldRec kRight), kRight ⊆ kLeft, DataCube cube)
     => FieldCube cube kLeft vLeft -> FieldCube cube kRight vRight -> FieldCube cube kLeft vLeft
 (⋉) = C.semijoin $ C.Joiner undefined undefined rcast
 infixl 6 ⋉
 
 
-(▷) :: (Ord (FieldRec kRight), kRight ⊆ kLeft, DataCube cube)
+(▷) :: (Key cube (FieldRec kRight), kRight ⊆ kLeft, DataCube cube)
     => FieldCube cube kLeft vLeft -> FieldCube cube kRight vRight -> FieldCube cube kLeft vLeft
 (▷) = C.antijoin $ C.Joiner undefined undefined rcast
 infixl 6 ▷

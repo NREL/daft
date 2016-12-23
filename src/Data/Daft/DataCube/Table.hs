@@ -33,7 +33,7 @@ type TableCube = Map
 
 instance DataCube TableCube where
 
-  type Key TableCube k = Ord k
+  type Key TableCube = Ord
 
   cmap = fmap
 
