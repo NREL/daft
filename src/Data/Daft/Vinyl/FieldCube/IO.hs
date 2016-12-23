@@ -65,13 +65,13 @@ readFieldCubeSource' BuiltinData{..} = throwError "Cannot read records from buil
 readFieldCubeSource' NoData          = return empty
 
 
-showFieldCube :: forall c ks vs . (DataCube c, Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs)) => (FieldCube c) ks vs -> [[String]]
+showFieldCube :: forall c ks vs . (DataCube c, C.Key c (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs)) => (FieldCube c) ks vs -> [[String]]
 showFieldCube = showFieldRecs . C.toKnownTable ((<+>) :: FieldRec ks -> FieldRec vs -> FieldRec (ks ++ vs))
 
 
-writeFieldCubeFile :: forall c ks vs e m . (DataCube c, Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => FilePath -> (FieldCube c) ks vs -> m ()
+writeFieldCubeFile :: forall c ks vs e m . (DataCube c, C.Key c (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => FilePath -> (FieldCube c) ks vs -> m ()
 writeFieldCubeFile = (. C.toKnownTable ((<+>) :: FieldRec ks -> FieldRec vs -> FieldRec (ks ++ vs))) . writeFieldRecFile
 
 
-writeFieldCubeSource :: forall c ks vs e m a . (DataCube c, Ord (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => DataSource a -> (FieldCube c) ks vs -> m (Maybe String)
+writeFieldCubeSource :: forall c ks vs e m a . (DataCube c, C.Key c (FieldRec ks), Labeled (FieldRec (ks ++ vs)), ShowFieldRec (ks ++ vs), IsString e, MonadError e m, MonadIO m) => DataSource a -> (FieldCube c) ks vs -> m (Maybe String)
 writeFieldCubeSource = (. C.toKnownTable ((<+>) :: FieldRec ks -> FieldRec vs -> FieldRec (ks ++ vs))) . writeFieldRecSource

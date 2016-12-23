@@ -23,9 +23,10 @@ import Control.Monad (guard)
 import Data.Daft.DataCube (DataCube(..), Gregator(..), Joiner(..), Rekeyer(..))
 import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes)
+import Data.Set (Set)
 
 import qualified Data.Map.Strict as M (assocs, filterWithKey, findMin, findMax, fromList, fromListWith, keys, keysSet, lookup, mapKeysWith, mapWithKey, member, null, split, size)
-import qualified Data.Set as S (toList)
+import qualified Data.Set as S (fromList)
 
 
 type TableCube = Map
@@ -34,6 +35,10 @@ type TableCube = Map
 instance DataCube TableCube k where
 
   type Key k = Ord k
+
+  type Key TableCube = Ord
+
+  type Keys TableCube = Set
 
   cmap = fmap
 
@@ -58,7 +63,7 @@ instance DataCube TableCube k where
   selectRange Nothing (Just k1)   = fst . M.split k1
   selectRange (Just k0) (Just k1) = fst . M.split k1 . snd . M.split k0
 
-  toKnownList combiner = map (uncurry combiner) . M.assocs
+  toKnownTable combiner = map (uncurry combiner) . M.assocs
 
   selectKnownMinimum table =
     do
@@ -76,7 +81,7 @@ instance DataCube TableCube k where
 
   projectWithKey = M.mapWithKey
 
-  projectKnownKeys = (. M.keys) . fmap
+  projectKnownKeys = (S.fromList .) . (. M.keys) . fmap
 
   rekey Rekeyer{..} = M.mapKeysWith (const id) rekeyer
 
@@ -102,7 +107,7 @@ instance DataCube TableCube k where
       ]
 
 
-fromTable :: Ord k => (a -> k) -> (a -> v) -> []a -> TableCube k v
+fromTable :: Ord k => (a -> k) -> (a -> v) -> [a] -> TableCube k v
 fromTable keyer valuer = M.fromList . fmap (keyer &&& valuer)
 
 
@@ -112,7 +117,7 @@ fromTableM keyer valuer =
     . mapM (liftA2 (,) . keyer <*> valuer)
 
 
-reify :: DataCube a k => (Ord k) => [k] -> a k v -> TableCube k v
+reify :: (DataCube a, Key a k, Ord k) => [k] -> a k v -> TableCube k v
 reify ks cube =
   M.fromList
     $ catMaybes

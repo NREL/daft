@@ -1,7 +1,6 @@
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards       #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 
 module Data.Daft.DataCube.Function (
@@ -19,17 +18,17 @@ import Control.DeepSeq (NFData(..))
 import Control.Monad (guard)
 import Data.Daft.DataCube (DataCube(..), Gregator(..), Joiner(..), Rekeyer(..))
 import Data.Maybe (mapMaybe)
-
-
-class Unconstrained k
+import Data.Set (Set, empty)
 
 
 newtype FunctionCube k v = FunctionCube {function :: k -> Maybe v}
 
 
-instance DataCube FunctionCube k where
+instance DataCube FunctionCube where
+ 
+  type Key FunctionCube = Ord -- FIXME: In general, this could be unconstrained, but 'Ord' makes it compatible with 'ExistentialCube'.
 
-  type Key k = Unconstrained k
+  type Keys FunctionCube = Set
 
   cmap = fmap
 
@@ -39,7 +38,7 @@ instance DataCube FunctionCube k where
 
   evaluate = function
 
-  knownKeys = const []
+  knownKeys = const empty
 
   knownSize = const 0
 
@@ -79,7 +78,7 @@ instance DataCube FunctionCube k where
 
   projectWithKey projector FunctionCube{..} = FunctionCube $ liftA2 fmap projector function
 
-  projectKnownKeys _         FunctionCube{..} = []
+  projectKnownKeys _         FunctionCube{..} = empty
 
   rekey Rekeyer{..} FunctionCube{..} = FunctionCube $ function . unrekeyer
 
@@ -126,7 +125,7 @@ fromFunction :: (k -> Maybe v) -> FunctionCube k v
 fromFunction = FunctionCube
 
 
-joinAny :: (DataCube cube k1, DataCube cube' k2, Key k1, Key k2) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube' k2 v2 -> FunctionCube k3 v3
+joinAny :: (Key cube k1, Key cube' k2, Key FunctionCube k3, DataCube cube, DataCube cube') => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> cube k1 v1 -> cube' k2 v2 -> FunctionCube k3 v3
 joinAny Joiner{..} combiner cube1 cube2 =
   FunctionCube $ \k3 ->
     do

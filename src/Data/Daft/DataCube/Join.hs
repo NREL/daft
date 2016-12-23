@@ -38,7 +38,7 @@ type family JoinStyle (c1 :: * -> * -> *) (c2 :: * -> * -> *) where
 
 
 class Joinable c1 c2 where
-  join :: (DataCube c1 k1, DataCube c2 k2, DataCube (Join c1 c2) k3, Key k1, Key k2, Key k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> (Join c1 c2) k3 v3
+  join :: (Key c1 k1, Key c2 k2, Key (Join c1 c2) k3) => Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> (Join c1 c2) k3 v3
 
 instance (JoinStyle c1 c2 ~ flag, Joinable' flag c1 c2 (Join c1 c2)) => Joinable c1 c2 where
   join = join' (Proxy :: Proxy flag)
@@ -52,7 +52,7 @@ instance Joinable Dummy1 Dummy2 where
 
 
 class Joinable' flag c1 c2 c3 where
-  join' :: (Key k1, Key k2, Key k3) => Proxy flag -> Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> c3 k3 v3
+  join' :: (Key c1 k1, Key c2 k2, Key c3 k3) => Proxy flag -> Joiner k1 k2 k3 -> (v1 -> v2 -> v3) -> c1 k1 v1 -> c2 k2 v2 -> c3 k3 v3
 
 instance Joinable' JoinSelf c1 c1 c1 where
   join' _ = joinSelf
@@ -61,9 +61,9 @@ instance Joinable' JoinAny c1 c2 FunctionCube where
   join' _ = joinAny
 
 
-semijoin :: (Key k2, DataCube cube1 k1, DataCube cube2 k2) => Joiner k1 k2 k1 -> cube1 k1 v1 -> cube2 k2 v2 -> cube1 k1 v1
+semijoin :: (Key cube2 k2, DataCube cube1, DataCube cube2) => Joiner k1 k2 k1 -> cube1 k1 v1 -> cube2 k2 v2 -> cube1 k1 v1
 semijoin Joiner{..} = flip (selectKeys . (. castRight) . evaluable)
 
 
-antijoin :: (Key k2, DataCube cube1 k1, DataCube cube2 k2) => Joiner k1 k2 k1 -> cube1 k1 v1 -> cube2 k2 v2 -> cube1 k1 v1
+antijoin :: (Key cube2 k2, DataCube cube1, DataCube cube2) => Joiner k1 k2 k1 -> cube1 k1 v1 -> cube2 k2 v2 -> cube1 k1 v1
 antijoin Joiner{..}= flip (selectKeys . (. castRight) . (not .) . evaluable)

@@ -4,6 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
+{-# LANGUAGE UndecidableInstances      #-}
 
 
 module Data.Daft.DataCube.Existential (
@@ -18,15 +19,20 @@ import Data.Daft.DataCube.Function (FunctionCube(..), joinAny)
 import Data.Daft.DataCube.Table (TableCube)
 import Data.Functor.Identity (Identity(..))
 import Data.Maybe (fromJust)
+import Data.Set (Set)
 import Data.Typeable (Typeable, gcast2, typeOf2)
 
 
-data ExistentialCube ks vs = forall cube . (Typeable cube, DataCube cube ks) => ExistentialCube (cube ks vs)
+data ExistentialCube k v = forall cube . (Typeable cube, DataCube cube, Key cube ~ Ord, Keys cube ~ Set) => ExistentialCube (cube k v) -- FIXME: TInstead of requiring 'Ord', could the constraint be a parameter?
 
 
 instance DataCube ExistentialCube k where
 
 --type Key k
+
+  type Key ExistentialCube = Ord
+
+  type Keys ExistentialCube = Set
 
   cmap = fmap
 
@@ -41,6 +47,10 @@ instance DataCube ExistentialCube k where
   selectRange k1 k2 (ExistentialCube c) = ExistentialCube $ selectRange k1 k2 c
 
   knownKeys (ExistentialCube c) = knownKeys c
+
+  knownSize (ExistentialCube c) = knownSize c
+
+  knownEmpty (ExistentialCube c) = knownEmpty c
 
   selectKnownMinimum (ExistentialCube c) = selectKnownMinimum c
 
@@ -70,7 +80,7 @@ instance Functor (ExistentialCube k) where
 
   fmap f (ExistentialCube c) = ExistentialCube $ cmap f c
 
-instance Ord k => Monoid (ExistentialCube k v) where
+instance Key ExistentialCube k => Monoid (ExistentialCube k v) where
 
   mempty = ExistentialCube (cempty :: TableCube k v)
 
