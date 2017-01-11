@@ -68,7 +68,7 @@ instance Rowable (FieldRec '[]) where
   row = pure RNil
 
 instance (Default (D.Value t), KnownSymbol s, Rowable (FieldRec rs)) => Rowable (FieldRec ('(s, t) ': rs)) where
-  row = rappend <$> (D.value $ (:& RNil) . Field <$> def) <*> row
+  row = rappend <$> D.value ((:& RNil) . Field <$> def) <*> row
 
 
 instance Default (D.Value Int) where
