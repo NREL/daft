@@ -100,7 +100,7 @@ toRecords :: (Key cube (FieldRec ks), RUnion ks vs as, DataCube cube) => Keys cu
 toRecords = C.toTable runion
 
 
-toKnownRecords :: (Ord (FieldRec ks), RUnion ks vs as) => ks ↝ vs -> [FieldRec as]
+toKnownRecords :: (Key cube (FieldRec ks), RUnion ks vs as, DataCube cube) => FieldCube cube ks vs -> [FieldRec as]
 toKnownRecords = C.toKnownTable runion
 
 
