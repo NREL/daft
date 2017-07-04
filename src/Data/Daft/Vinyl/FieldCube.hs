@@ -30,6 +30,7 @@ module Data.Daft.Vinyl.FieldCube (
 , κ
 , δ
 , ω
+, υ
 , ρ
 -- * Joins
 , (⋈)
@@ -149,6 +150,10 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
 
 ω :: (ks' ⊆ ks, Key cube (FieldRec ks'), DataCube cube) => FieldCube cube ks vs -> Keys cube (FieldRec ks')
 ω = C.projectKnownKeys rcast
+
+
+υ :: (Key cube k', DataCube cube) => (FieldRec ks -> k') -> FieldCube cube ks vs -> Keys cube k'
+υ = C.projectKnownKeys
 
 
 (⋈) :: (Eq (FieldRec (Intersection kLeft kRight)), Intersection kLeft kRight ⊆ kLeft, Intersection kLeft kRight ⊆ kRight, kLeft ⊆ k, kRight ⊆ k, RUnion kLeft kRight k, RUnion vLeft vRight v, RDistinct vLeft vRight, Key cubeLeft (FieldRec kLeft), Key cubeRight (FieldRec kRight), Key (Join cubeLeft cubeRight) (FieldRec k), DataCube cubeLeft, DataCube cubeRight, Joinable cubeLeft cubeRight) -- FIXME: This can be simplified somewhat.
