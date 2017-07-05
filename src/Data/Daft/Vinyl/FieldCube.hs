@@ -28,6 +28,7 @@ module Data.Daft.Vinyl.FieldCube (
 , σ
 , π
 , κ
+, κ'
 , δ
 , ω
 , υ
@@ -136,6 +137,10 @@ type FieldGregator as bs = C.Gregator (FieldRec as) (FieldRec bs)
       C.aggregator    = rcast
     , C.disaggregator = flip map (S.toAscList keys) . (rcast .) . (<+>)
     }
+
+
+κ' :: (ks0 ⊆ ks, ks ⊆ (ks' ++ ks0), ks' ⊆ ks, Key cube (FieldRec ks), Key cube (FieldRec ks'), DataCube cube) => Set (FieldRec ks0) -> ([FieldRec (ks ++ vs)] -> FieldRec vs') -> FieldCube cube ks vs -> FieldCube cube ks' vs' -- FIXME: Instead of subset, use sum.
+κ' keys f = κ keys (const f) . π  (<+>)
 
 
 δ :: (ks0 ⊆ ks', ks' ⊆ (ks ++ ks0), ks ⊆ ks', Key cube (FieldRec ks), Key cube (FieldRec ks'), DataCube cube) => Set (FieldRec ks0) -> (FieldRec ks' -> FieldRec vs -> FieldRec vs') -> FieldCube cube ks vs -> FieldCube cube ks' vs' -- FIXME: Instead of subset, use sum.
