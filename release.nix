@@ -12,8 +12,8 @@ let
                 haskellPackagesNew.callPackage ./default.nix { };
               singletons =
                 haskellPackagesNew.callPackage ./singletons.nix { };
-              raft =
-                haskellPackagesNew.callPackage ../raft/default.nix { };
+#             raft =
+#               haskellPackagesNew.callPackage ../raft/default.nix { };
             };
           };
         };
