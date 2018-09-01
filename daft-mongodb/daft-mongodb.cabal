@@ -1,0 +1,44 @@
+name:                daft-mongodb
+version:             0.4.17.4
+license:             AllRightsReserved
+category:            Data
+build-type:          Simple
+cabal-version:       >= 1.10
+
+library
+  hs-source-dirs  : src
+  exposed-modules : Data.Daft.Vinyl.FieldCube.Bson
+                    Data.Daft.Vinyl.FieldCube.MongoDB
+                    Data.Daft.Vinyl.FieldRec.Bson
+                    Data.Daft.Vinyl.FieldRec.MongoDB
+  build-depends   : base >= 4 && < 5
+                  , bson
+                  , bson-generic
+                  , daft
+                  , monad-control
+                  , mongoDB == 2.1.1.1
+                  , mtl
+                  , text
+                  , vinyl
+  exposed         : True
+  buildable       : True
+  default-language: Haskell2010
+  ghc-options     : -O2 -Wall
+
+test-suite serializing
+  type            : exitcode-stdio-1.0
+  hs-source-dirs  : src
+  main-is         : Test.hs
+  build-depends   : base >= 4 && < 5
+                  , bson
+                  , bson-generic
+                  , daft
+                  , monad-control
+                  , mongoDB
+                  , mtl
+                  , raft
+                  , text
+                  , vinyl
+  buildable       : True
+  default-language: Haskell2010
+  ghc-options     : -O2 -Wall
