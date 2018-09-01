@@ -1,0 +1,52 @@
+name:                daft
+version:             0.4.14.6
+license:             AllRightsReserved
+category:            Data
+build-type:          Simple
+cabal-version:       >= 1.10
+
+library
+  hs-source-dirs  : src
+  exposed-modules : Data.Daft.Cache
+                    Data.Daft.Cache.Memory
+                    Data.Daft.DataCube
+                    Data.Daft.DataCube.Existential
+                    Data.Daft.DataCube.Function
+                    Data.Daft.DataCube.Join
+                    Data.Daft.DataCube.Sum
+                    Data.Daft.DataCube.Table
+                    Data.Daft.DataCube.Util
+                    Data.Daft.Keyed
+                    Data.Daft.Lookup
+                    Data.Daft.Source
+                    Data.Daft.TypeLevel
+                    Data.Daft.Vinyl.FieldCube
+                    Data.Daft.Vinyl.FieldCube.Aeson
+                    Data.Daft.Vinyl.FieldCube.IO
+                    Data.Daft.Vinyl.FieldCube.Example
+                    Data.Daft.Vinyl.FieldRec
+                    Data.Daft.Vinyl.FieldRec.Aeson
+                    Data.Daft.Vinyl.FieldRec.IO
+                    Data.Daft.Vinyl.FieldRec.Instances
+                    Data.Daft.Vinyl.FieldRec.NFData
+                    Data.Daft.Vinyl.Rec
+                    Data.Daft.Vinyl.TypeLevel
+                    Data.Daft.Vinyl.TypeLevel.Test
+  build-depends   : base >= 4 && < 5
+                  , aeson
+                  , bytestring
+                  , containers
+                  , data-default
+                  , deepseq
+                  , hashable
+                  , mtl
+                  , raft
+                  , text
+                  , tostring
+                  , type-list
+                  , unordered-containers
+                  , vinyl
+  exposed         : True
+  buildable       : True
+  default-language: Haskell2010
+  ghc-options     : -O2 -Wall
