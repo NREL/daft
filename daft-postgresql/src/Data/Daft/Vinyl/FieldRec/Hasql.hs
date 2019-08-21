@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MonoLocalBinds        #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeOperators         #-}
@@ -29,12 +30,12 @@ import Data.Vinyl.Core (Rec(..), rappend)
 import Data.Vinyl.Derived (ElField(..), FieldRec)
 import Data.Vinyl.Lens (type (∈))
 import GHC.TypeLits (KnownSymbol)
-import Hasql.Query (Query, statement)
+import Hasql.Statement (Statement(..))
 
 import qualified Data.ByteString.Char8 as B (pack)
 import qualified Data.Text as T (pack, unpack)
-import qualified Hasql.Decoders as D (Row, Value, int8, rowsAffected, rowsList, text, value)
-import qualified Hasql.Encoders as E (Params, Value, int8, text, unit, value)
+import qualified Hasql.Decoders as D (Row, Value, column, int8, rowsAffected, rowList, text)
+import qualified Hasql.Encoders as E (Params, Value, int8, param, text, unit)
 
 
 class Paramsable a where
@@ -51,7 +52,7 @@ instance ParamsableWithProxy (FieldRec '[]) (FieldRec rs) where
   paramsWithProxy _ = contramap (const ()) E.unit
 
 instance (Default (E.Value t), '(s, t) ∈ rs, ParamsableWithProxy (FieldRec rs') (FieldRec rs)) => ParamsableWithProxy (FieldRec ('(s, t) ': rs')) (FieldRec rs) where
-  paramsWithProxy _ = contramap ((Proxy :: Proxy '(s, t)) <:) (E.value def) <> paramsWithProxy (Proxy :: Proxy (FieldRec rs'))
+  paramsWithProxy _ = contramap ((Proxy :: Proxy '(s, t)) <:) (E.param def) <> paramsWithProxy (Proxy :: Proxy (FieldRec rs'))
 
 
 instance Default (E.Value Int) where
@@ -68,7 +69,7 @@ instance Rowable (FieldRec '[]) where
   row = pure RNil
 
 instance (Default (D.Value t), KnownSymbol s, Rowable (FieldRec rs)) => Rowable (FieldRec ('(s, t) ': rs)) where
-  row = rappend <$> D.value ((:& RNil) . Field <$> def) <*> row
+  row = rappend <$> D.column ((:& RNil) . Field <$> def) <*> row
 
 
 instance Default (D.Value Int) where
@@ -78,7 +79,7 @@ instance Default (D.Value String) where
   def = T.unpack <$> D.text
 
 
-selectList :: forall ps rs . (Paramsable (FieldRec ps), Rowable (FieldRec rs), Labeled (FieldRec ps), Labeled (FieldRec rs)) => String -> Query (FieldRec ps) [FieldRec rs]
+selectList :: forall ps rs . (Paramsable (FieldRec ps), Rowable (FieldRec rs), Labeled (FieldRec ps), Labeled (FieldRec rs)) => String -> Statement (FieldRec ps) [FieldRec rs]
 selectList table =
   let
     inLabels  = labels (Proxy :: Proxy (FieldRec ps))
@@ -96,12 +97,12 @@ selectList table =
                       $ zipWith ((. ((" = $" ++) . show)) . (++)) (quote <$> inLabels) [(1 :: Int)..]
            )
     encoder = params
-    decoder = D.rowsList row
+    decoder = D.rowList row
   in 
-    statement (B.pack sql) encoder decoder True
+    Statement (B.pack sql) encoder decoder True
 
 
-insertRow :: forall ps . (Paramsable (FieldRec ps), Labeled (FieldRec ps)) => String -> Query (FieldRec ps) Int
+insertRow :: forall ps . (Paramsable (FieldRec ps), Labeled (FieldRec ps)) => String -> Statement (FieldRec ps) Int
 insertRow table =
   let
     inLabels  = labels (Proxy :: Proxy (FieldRec ps))
@@ -116,7 +117,7 @@ insertRow table =
     encoder = params
     decoder = fromEnum <$> D.rowsAffected
   in
-    statement (B.pack sql) encoder decoder True
+    Statement (B.pack sql) encoder decoder True
 
 
 quote :: String -> String
